@@ -1,6 +1,6 @@
 <Solution>
   <Project Path="Finanzas.Api/Finanzas.Api.csproj" />
-  <Project Path="Finanzas.Web/finanzas.web.esproj">
+  <Project Path="Finanzas.Web/finanzas.web.esproj" DisplayName="Finanzas.Web">
     <Build />
     <Deploy />
   </Project>
