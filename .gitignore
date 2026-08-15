@@ -1,0 +1,54 @@
+# Visual Studio y archivos locales del usuario
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Resultados de compilación de .NET
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Cobertura y resultados de pruebas
+[Tt]est[Rr]esult*/
+coverage/
+*.coverage
+*.coveragexml
+
+# Paquetes restaurados localmente
+packages/
+*.nupkg
+*.snupkg
+
+# Frontend React, TypeScript y Vite
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Variables de entorno y secretos locales
+.env
+.env.*
+!.env.example
+secrets.json
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.temp
+~$*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Bases de datos y archivos locales de desarrollo
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
