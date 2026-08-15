@@ -20,6 +20,7 @@ FinanzasPersonales/
 |   |-- Controllers/       Controladores HTTP
 |   |-- Models/            Clases que representan datos del dominio
 |   `-- Program.cs         Configuración y punto de entrada de la API
+|-- Finanzas.Web/          Proyecto independiente React, TypeScript y Vite
 |-- docs/                  Documentación del proyecto
 `-- FinanzasPersonales.slnx
 ```

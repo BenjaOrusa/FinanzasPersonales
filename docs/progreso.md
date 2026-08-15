@@ -39,7 +39,10 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [ ] Consulta de un movimiento por identificador.
 - [ ] Alta, modificación y eliminación de movimientos.
 - [ ] Persistencia con SQL Server y Entity Framework Core.
-- [ ] Frontend React y TypeScript.
+- [x] Frontend React, TypeScript y Vite creado como proyecto separado.
+- [x] Navegación entre Resumen, Movimientos, Categorías y Cuentas.
+- [x] CRUD visual de movimientos con datos temporales en memoria.
+- [x] Administración visual básica de categorías y cuentas en memoria.
 - [ ] Autenticación y autorización.
 
 ## Decisiones vigentes
@@ -53,5 +56,6 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 
 ## Próximo paso
 
-Crear el proyecto separado de React, TypeScript y Vite dentro del mismo repositorio,
-revisar su estructura generada y comprobar que pueda ejecutarse de forma independiente.
+Probar manualmente todos los flujos del frontend y registrar el commit verificado. Después,
+retomar el contrato HTTP y crear `GET /api/movimientos` con datos en memoria para comenzar
+la primera integración real entre React y ASP.NET Core.

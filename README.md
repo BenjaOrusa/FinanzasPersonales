@@ -31,6 +31,7 @@ practicar CRUD y comunicación HTTP.
 ```text
 FinanzasPersonales/
 |-- Finanzas.Api/          Proyecto ASP.NET Core Web API
+|-- Finanzas.Web/          Proyecto React, TypeScript y Vite
 |-- docs/                  Plan, convenciones y registro de aprendizaje
 |-- FinanzasPersonales.slnx
 `-- README.md
