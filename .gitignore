@@ -4,6 +4,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+settings.VisualStudio.json
 
 # Resultados de compilación de .NET
 [Bb]in/
