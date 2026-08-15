@@ -34,6 +34,7 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [ ] Historias de usuario y alcance de la primera versión.
 - [x] Mapa de páginas y navegación.
 - [x] Wireframes de baja fidelidad.
+- [x] Sistema visual inicial aprobado.
 - [ ] `GET /api/movimientos` con datos en memoria.
 - [ ] Consulta de un movimiento por identificador.
 - [ ] Alta, modificación y eliminación de movimientos.
@@ -52,6 +53,5 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 
 ## Próximo paso
 
-Definir el sistema visual común del frontend: colores, tipografía, espaciado, botones,
-campos, tarjetas y navegación adaptable. Después se creará el proyecto separado de React,
-TypeScript y Vite dentro del mismo repositorio.
+Crear el proyecto separado de React, TypeScript y Vite dentro del mismo repositorio,
+revisar su estructura generada y comprobar que pueda ejecutarse de forma independiente.
