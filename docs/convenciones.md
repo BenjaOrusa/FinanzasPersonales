@@ -9,6 +9,10 @@
 ## C# y ASP.NET Core
 
 - Clases, propiedades y métodos usan **PascalCase**: `Movimiento`, `Descripcion`.
+- Las claves conservan exactamente la nomenclatura SQL acordada: `ID_Categoria`,
+  `ID_Cuenta` e `ID_Movimiento`. Esta regla se aplica también a propiedades C#.
+- Los campos de tipo incluyen la entidad singular: `TipoCategoria`, `TipoCuenta` y
+  `TipoMovimiento`.
 - Variables y parámetros usan **camelCase**: `movimiento`, `movimientoId`.
 - Cada clase pública se guarda, normalmente, en un archivo con su mismo nombre.
 - Los modelos del dominio se guardan en `Finanzas.Api/Models`.
@@ -42,4 +46,5 @@ Documentar convenciones iniciales del proyecto
 Agregar endpoint para listar movimientos
 ```
 
-El repositorio Git todavía no está inicializado en la carpeta del proyecto.
+El trabajo nuevo se realiza en `benjamin.orusa`, se integra en `desarrollo` y `main`
+se reserva para versiones estables.
