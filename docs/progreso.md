@@ -26,14 +26,14 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [x] Repositorio Git local inicializado.
 - [x] Archivo `.gitignore` creado y revisado.
 - [x] Rama principal `main` definida.
-- [ ] Commit inicial creado.
-- [ ] Repositorio remoto creado en GitHub.
-- [ ] Remoto `origin` configurado.
-- [ ] Rama `main` publicada y verificada en GitHub.
-- [ ] Ciclo de trabajo con una rama practicado.
+- [x] Commit inicial creado.
+- [x] Repositorio remoto creado en GitHub.
+- [x] Remoto `origin` configurado.
+- [x] Rama `main` publicada y verificada en GitHub.
+- [x] Ramas `desarrollo` y `benjamin.orusa` creadas y publicadas.
 - [ ] Historias de usuario y alcance de la primera versión.
-- [ ] Mapa de páginas y navegación.
-- [ ] Wireframes de baja fidelidad.
+- [x] Mapa de páginas y navegación.
+- [x] Wireframes de baja fidelidad.
 - [ ] `GET /api/movimientos` con datos en memoria.
 - [ ] Consulta de un movimiento por identificador.
 - [ ] Alta, modificación y eliminación de movimientos.
@@ -52,7 +52,6 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 
 ## Próximo paso
 
-Continuar la Fase 0 comenzando por verificar la instalación y configuración de Git.
-Después se inicializará el repositorio local, se revisará el `.gitignore` y se creará el
-primer commit. La creación y publicación del repositorio de GitHub se realizará como un
-paso posterior y verificable, antes de comenzar el diseño funcional.
+Definir el sistema visual común del frontend: colores, tipografía, espaciado, botones,
+campos, tarjetas y navegación adaptable. Después se creará el proyecto separado de React,
+TypeScript y Vite dentro del mismo repositorio.
