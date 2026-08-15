@@ -8,6 +8,7 @@ La documentación se actualizará de manera incremental junto con el código.
 - [Plan de diseño e implementación](plan-diseno-implementacion.md): hoja de ruta secuencial completa.
 - [Diseño funcional del frontend](diseno-frontend.md): mapa aprobado, páginas, estados y reglas visuales.
 - [Sistema visual del frontend](sistema-visual.md): paleta, tipografía, espaciado y componentes comunes.
+- [Diseño de base de datos](diseno-base-datos.md): tablas, relaciones, tipos, restricciones y cálculos.
 - [Convenciones de código](convenciones.md): nombres, organización y comentarios.
 - [Referencia HTTP](http.md): métodos, rutas y códigos de estado que utilizaremos.
 - [Progreso de aprendizaje](progreso.md): conceptos estudiados y funcionalidades terminadas.

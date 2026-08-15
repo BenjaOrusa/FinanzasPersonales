@@ -14,7 +14,7 @@ export const initialCategories: Category[] = [
 ]
 
 export const initialAccounts: Account[] = [
-  { id: 1, name: 'Efectivo', type: 'cash', initialBalance: 50000 },
-  { id: 2, name: 'Cuenta bancaria', type: 'bank', initialBalance: 100000 },
-  { id: 3, name: 'Billetera virtual', type: 'wallet', initialBalance: 10000 },
+  { id: 1, name: 'Efectivo', type: 'cash' },
+  { id: 2, name: 'Cuenta bancaria', type: 'bank' },
+  { id: 3, name: 'Billetera virtual', type: 'wallet' },
 ]

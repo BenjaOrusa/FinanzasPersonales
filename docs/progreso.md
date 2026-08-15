@@ -21,7 +21,7 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 
 - [x] Proyecto backend inicial creado.
 - [x] Endpoint de ejemplo `/weatherforecast` probado.
-- [x] Modelo inicial `Movimiento` creado.
+- [x] Modelo inicial `Movimiento` evaluado y retirado al quedar superado por el diseño funcional.
 - [x] Plan secuencial de diseño e implementación documentado.
 - [x] Repositorio Git local inicializado.
 - [x] Archivo `.gitignore` creado y revisado.
@@ -39,6 +39,7 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [ ] Consulta de un movimiento por identificador.
 - [ ] Alta, modificación y eliminación de movimientos.
 - [ ] Persistencia con SQL Server y Entity Framework Core.
+- [x] Modelo relacional inicial de categorías, cuentas y movimientos aprobado y documentado.
 - [x] Frontend React, TypeScript y Vite creado como proyecto separado.
 - [x] Navegación entre Resumen, Movimientos, Categorías y Cuentas.
 - [x] CRUD visual de movimientos con datos temporales en memoria.
@@ -51,11 +52,11 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - La lógica financiera importante estará en el backend.
 - Los datos se almacenarán inicialmente en memoria.
 - Los importes se representarán con `decimal` en C#.
-- Inicialmente, `Tipo` será texto y el importe se guardará como valor positivo.
+- El modelo de datos definitivo se diseñará a partir de las pantallas aprobadas.
+- Los importes se guardarán como valores positivos y el tipo indicará ingreso o gasto.
 - La autenticación se incorporará después de aprender CRUD y comunicación HTTP.
 
 ## Próximo paso
 
-Probar manualmente todos los flujos del frontend y registrar el commit verificado. Después,
-retomar el contrato HTTP y crear `GET /api/movimientos` con datos en memoria para comenzar
-la primera integración real entre React y ASP.NET Core.
+Diseñar el modelo conceptual y relacional de movimientos, categorías y cuentas. Después se
+definirán el esquema SQL y sus restricciones antes de crear las nuevas entidades del backend.
