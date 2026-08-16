@@ -1,19 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
-import { initialAccounts, initialCategories, initialMovements } from './data/exampleData'
+import { initialAccounts, initialCategories } from './data/exampleData'
 import SummaryPage from './pages/SummaryPage'
 import AccountsPage from './pages/AccountsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import MovementFormPage from './pages/MovementFormPage'
 import MovementsPage from './pages/MovementsPage'
 import type { Account, Category, Movement } from './types/finance'
+import { obtenerMovimientos } from './services/movementsApi'
 import './App.css'
 
 function App() {
   // El estado vive arriba para poder compartirlo entre todas las páginas.
-  const [movements, setMovements] = useState<Movement[]>(initialMovements)
+  const [movements, setMovements] = useState<Movement[]>([])
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadMovements() {
+      try {
+        setIsLoading(true)
+        setLoadError(null)
+        const apiMovements = await obtenerMovimientos(controller.signal)
+        setMovements(apiMovements)
+      } catch (error) {
+        // AbortError ocurre normalmente cuando React desmonta el componente.
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setLoadError(error instanceof Error ? error.message : 'No fue posible cargar los movimientos.')
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+
+    loadMovements()
+    return () => controller.abort()
+  }, [])
 
   function saveMovement(movement: Movement) {
     setMovements((current) => current.some((item) => item.id === movement.id) ? current.map((item) => item.id === movement.id ? movement : item) : [movement, ...current])
@@ -55,6 +80,8 @@ function App() {
         </nav>
       </aside>
       <main className="main-content">
+        {isLoading && <p className="connection-status" role="status">Cargando movimientos desde la API...</p>}
+        {loadError && <p className="connection-status connection-status--error" role="alert">{loadError}</p>}
         <Routes>
           <Route path="/" element={<SummaryPage movements={movements} />} />
           <Route path="/movimientos" element={<MovementsPage movements={movements} onDelete={(id) => setMovements((items) => items.filter((item) => item.id !== id))} />} />

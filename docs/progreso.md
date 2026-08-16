@@ -36,6 +36,8 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [x] Wireframes de baja fidelidad.
 - [x] Sistema visual inicial aprobado.
 - [ ] `GET /api/movimientos` con datos en memoria.
+- [x] `GET /api/movimientos` conectado a SQL Server mediante Entity Framework Core.
+- [x] Primera lectura real desde React mediante `fetch`, con carga, error y CORS.
 - [ ] Consulta de un movimiento por identificador.
 - [ ] Alta, modificación y eliminación de movimientos.
 - [ ] Persistencia con SQL Server y Entity Framework Core.

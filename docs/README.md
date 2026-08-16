@@ -12,6 +12,7 @@ La documentación se actualizará de manera incremental junto con el código.
 - [Scripts de base de datos](../database/README.md): orden y ejecución de los scripts SQL versionados.
 - [Convenciones de código](convenciones.md): nombres, organización y comentarios.
 - [Referencia HTTP](http.md): métodos, rutas y códigos de estado que utilizaremos.
+- [Integración React y API](integracion-frontend-api.md): recorrido de la primera petición real de extremo a extremo.
 - [Progreso de aprendizaje](progreso.md): conceptos estudiados y funcionalidades terminadas.
 
 ## Estructura actual
