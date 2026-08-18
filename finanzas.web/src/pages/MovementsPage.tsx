@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import type { Movement, MovementType } from '../types/finance'
 
-interface MovementsPageProps { movements: Movement[]; onDelete: (id: number) => void }
+interface MovementsPageProps { movements: Movement[]; onDelete: (id: number) => Promise<void> }
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 function MovementsPage({ movements, onDelete }: MovementsPageProps) {
@@ -20,7 +20,7 @@ function MovementsPage({ movements, onDelete }: MovementsPageProps) {
       <section className="panel" aria-live="polite">
         {visible.length === 0 ? <div className="empty-state"><h2>No encontramos movimientos</h2><p>Probá limpiar la búsqueda o registrar uno nuevo.</p></div> : (
           <div className="table-wrapper"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Cuenta</th><th>Importe</th><th><span className="sr-only">Acciones</span></th></tr></thead><tbody>
-            {visible.map((item) => <tr key={item.id}><td>{new Date(`${item.date}T00:00:00`).toLocaleDateString('es-AR')}</td><td>{item.description}</td><td>{item.category}</td><td>{item.account}</td><td className={`movement-amount--${item.type}`}>{item.type === 'income' ? '+' : '−'} {money.format(item.amount)}</td><td className="row-actions"><Link to={`/movimientos/${item.id}/editar`}>Editar</Link><button type="button" onClick={() => window.confirm(`¿Eliminar ${item.description}?`) && onDelete(item.id)}>Eliminar</button></td></tr>)}
+            {visible.map((item) => <tr key={item.id}><td>{new Date(`${item.date}T00:00:00`).toLocaleDateString('es-AR')}</td><td>{item.description}</td><td>{item.category}</td><td>{item.account}</td><td className={`movement-amount--${item.type}`}>{item.type === 'income' ? '+' : '−'} {money.format(item.amount)}</td><td className="row-actions"><Link to={`/movimientos/${item.id}/editar`}>Editar</Link><button type="button" onClick={async () => { if (window.confirm(`¿Eliminar ${item.description}?`)) { try { await onDelete(item.id) } catch (error) { window.alert(error instanceof Error ? error.message : 'No se pudo eliminar.') } } }}>Eliminar</button></td></tr>)}
           </tbody></table></div>
         )}
       </section>

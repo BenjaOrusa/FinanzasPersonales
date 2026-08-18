@@ -97,5 +97,8 @@ componente se desmonta antes de recibir la respuesta.
 
 - La lectura `GET` usa datos reales.
 - Categorías y cuentas continúan con datos temporales en React.
-- Crear, editar y eliminar movimientos todavía modifica solamente el estado del frontend.
+- Movimientos, categorías y cuentas se consultan desde SQL Server mediante la API.
+- Crear, editar y eliminar movimientos persiste los cambios en SQL Server.
+- Crear y eliminar categorías y cuentas también persiste los cambios; la API impide
+  eliminar registros que tengan movimientos asociados.
 - Los siguientes contratos incorporarán esas operaciones una por vez.

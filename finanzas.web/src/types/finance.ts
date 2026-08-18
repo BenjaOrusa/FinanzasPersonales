@@ -8,6 +8,8 @@ export interface Movement {
   date: string
   amount: number
   type: MovementType
+  categoryId: number
+  accountId: number
   note?: string
 }
 

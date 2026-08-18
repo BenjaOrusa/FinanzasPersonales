@@ -16,6 +16,43 @@ interface MovimientoRespuesta {
 
 const MOVIMIENTOS_URL = 'https://localhost:7097/api/movimientos'
 
+export interface GuardarMovimiento {
+  description: string
+  amount: number
+  date: string
+  type: Movement['type']
+  categoryId: number
+  accountId: number
+  note?: string
+}
+
+function adaptarMovimiento(item: MovimientoRespuesta): Movement {
+  return {
+    id: item.ID_Movimiento,
+    description: item.Descripcion,
+    amount: item.Importe,
+    date: item.Fecha,
+    type: item.TipoMovimiento === 'Ingreso' ? 'income' : 'expense',
+    categoryId: item.ID_Categoria,
+    category: item.Categoria,
+    accountId: item.ID_Cuenta,
+    account: item.Cuenta,
+    note: item.Nota ?? undefined,
+  }
+}
+
+function crearCuerpo(movimiento: GuardarMovimiento) {
+  return JSON.stringify({
+    Descripcion: movimiento.description,
+    Importe: movimiento.amount,
+    Fecha: movimiento.date,
+    TipoMovimiento: movimiento.type === 'income' ? 'Ingreso' : 'Gasto',
+    ID_Categoria: movimiento.categoryId,
+    ID_Cuenta: movimiento.accountId,
+    Nota: movimiento.note ?? null,
+  })
+}
+
 export async function obtenerMovimientos(signal?: AbortSignal): Promise<Movement[]> {
   const response = await fetch(MOVIMIENTOS_URL, { signal })
 
@@ -27,14 +64,26 @@ export async function obtenerMovimientos(signal?: AbortSignal): Promise<Movement
   const data = (await response.json()) as MovimientoRespuesta[]
 
   // Esta adaptación mantiene el contrato HTTP separado del modelo visual de React.
-  return data.map((item) => ({
-    id: item.ID_Movimiento,
-    description: item.Descripcion,
-    amount: item.Importe,
-    date: item.Fecha,
-    type: item.TipoMovimiento === 'Ingreso' ? 'income' : 'expense',
-    category: item.Categoria,
-    account: item.Cuenta,
-    note: item.Nota ?? undefined,
-  }))
+  return data.map(adaptarMovimiento)
+}
+
+export async function crearMovimiento(movimiento: GuardarMovimiento): Promise<Movement> {
+  const response = await fetch(MOVIMIENTOS_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: crearCuerpo(movimiento),
+  })
+  if (!response.ok) throw new Error(`No se pudo crear el movimiento (${response.status}).`)
+  return adaptarMovimiento((await response.json()) as MovimientoRespuesta)
+}
+
+export async function actualizarMovimiento(id: number, movimiento: GuardarMovimiento): Promise<Movement> {
+  const response = await fetch(`${MOVIMIENTOS_URL}/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: crearCuerpo(movimiento),
+  })
+  if (!response.ok) throw new Error(`No se pudo actualizar el movimiento (${response.status}).`)
+  return adaptarMovimiento((await response.json()) as MovimientoRespuesta)
+}
+
+export async function eliminarMovimiento(id: number): Promise<void> {
+  const response = await fetch(`${MOVIMIENTOS_URL}/${id}`, { method: 'DELETE' })
+  if (!response.ok) throw new Error(`No se pudo eliminar el movimiento (${response.status}).`)
 }

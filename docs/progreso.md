@@ -38,8 +38,10 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - [ ] `GET /api/movimientos` con datos en memoria.
 - [x] `GET /api/movimientos` conectado a SQL Server mediante Entity Framework Core.
 - [x] Primera lectura real desde React mediante `fetch`, con carga, error y CORS.
-- [ ] Consulta de un movimiento por identificador.
-- [ ] Alta, modificación y eliminación de movimientos.
+- [x] Consulta de un movimiento por identificador.
+- [x] Alta, modificación y eliminación de movimientos persistidos en SQL Server.
+- [x] Categorías y cuentas obtenidas desde la API, sin arreglos hardcodeados.
+- [x] Alta y eliminación persistente de categorías y cuentas.
 - [ ] Persistencia con SQL Server y Entity Framework Core.
 - [x] Modelo relacional inicial de categorías, cuentas y movimientos aprobado y documentado.
 - [x] Frontend React, TypeScript y Vite creado como proyecto separado.
