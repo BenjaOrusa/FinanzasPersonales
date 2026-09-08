@@ -9,6 +9,7 @@ public class CuentaRespuesta
     public bool Activa { get; set; }
 }
 
+
 /// <summary>Datos necesarios para crear una cuenta.</summary>
 public class CrearCuentaSolicitud
 {
