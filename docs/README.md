@@ -5,6 +5,7 @@ La documentación se actualizará de manera incremental junto con el código.
 
 ## Documentos
 
+- [Visión y potencial del producto](vision-y-potencial.md): evolución multiusuario, roles, propiedad, auditoría y hoja de ruta.
 - [Plan de diseño e implementación](plan-diseno-implementacion.md): hoja de ruta secuencial completa.
 - [Diseño funcional del frontend](diseno-frontend.md): mapa aprobado, páginas, estados y reglas visuales.
 - [Sistema visual del frontend](sistema-visual.md): paleta, tipografía, espaciado y componentes comunes.

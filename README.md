@@ -56,6 +56,7 @@ Direcciones locales configuradas:
 ## Documentación
 
 - [Índice de documentación](docs/README.md)
+- [Visión y potencial del producto](docs/vision-y-potencial.md)
 - [Plan secuencial de diseño e implementación](docs/plan-diseno-implementacion.md)
 - [Convenciones de código](docs/convenciones.md)
 - [Referencia HTTP](docs/http.md)
