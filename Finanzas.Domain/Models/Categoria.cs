@@ -1,4 +1,4 @@
-namespace Finanzas.Api.Models;
+namespace Finanzas.Domain.Models;
 
 /// <summary>
 /// Clasifica un movimiento como ingreso o gasto.

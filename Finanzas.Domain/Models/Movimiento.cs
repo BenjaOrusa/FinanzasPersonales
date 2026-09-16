@@ -1,4 +1,4 @@
-namespace Finanzas.Api.Models;
+namespace Finanzas.Domain.Models;
 
 /// <summary>
 /// Representa un ingreso o gasto asociado a una categoría y una cuenta.

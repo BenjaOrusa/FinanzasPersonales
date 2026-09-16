@@ -1,4 +1,4 @@
-namespace Finanzas.Api.Models;
+namespace Finanzas.Domain.Models;
 
 /// <summary>
 /// Representa el lugar donde se registra el dinero, como efectivo o una cuenta bancaria.

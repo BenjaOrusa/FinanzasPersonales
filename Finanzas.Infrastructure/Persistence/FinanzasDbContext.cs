@@ -1,7 +1,8 @@
-using Finanzas.Api.Models;
+using Finanzas.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Finanzas.Api.Data;
+
+namespace Finanzas.Infrastructure.Persistence;
 
 /// <summary>
 /// Representa una sesión de trabajo de Entity Framework Core con la base FinanzasPersonales.
