@@ -1,6 +1,6 @@
 using Finanzas.Api.Contracts.Cuentas;
-using Finanzas.Api.Data;
-using Finanzas.Api.Models;
+using Finanzas.Domain.Models;
+using Finanzas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
