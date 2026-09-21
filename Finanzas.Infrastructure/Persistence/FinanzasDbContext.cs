@@ -16,17 +16,17 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
     /// <summary>
     /// Conjunto consultable asociado a la tabla Categorias.
     /// </summary>
-    public DbSet<Categoria> Categorias => Set<Categoria>();
+    public DbSet<Category> Categories => Set<Category>();
 
     /// <summary>
     /// Conjunto consultable asociado a la tabla Cuentas.
     /// </summary>
-    public DbSet<Cuenta> Cuentas => Set<Cuenta>();
+    public DbSet<Account> Accounts => Set<Account>();
 
     /// <summary>
     /// Conjunto consultable asociado a la tabla Movimientos.
     /// </summary>
-    public DbSet<Movimiento> Movimientos => Set<Movimiento>();
+    public DbSet<Movement> Movements => Set<Movement>();
 
 
 
@@ -39,157 +39,160 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        ConfigurarCategoria(modelBuilder);
-        ConfigurarCuenta(modelBuilder);
-        ConfigurarMovimiento(modelBuilder);
+        ConfigureCategory(modelBuilder);
+        ConfigureAccount(modelBuilder);
+        ConfigureMovement(modelBuilder);
     }
 
-    private static void ConfigurarCategoria(ModelBuilder modelBuilder)
+    private static void ConfigureCategory(ModelBuilder modelBuilder)
     {
-        var categoria = modelBuilder.Entity<Categoria>();
+        var category = modelBuilder.Entity<Category>();
 
-        categoria.ToTable("Categorias", tabla =>
+        category.ToTable("Categories", tabla =>
         {
+            // CORREGIDO: Se usa Description y CategoryType en lugar de Descripcion y TipoCategoria
             tabla.HasCheckConstraint(
                 "CK_Categorias_Descripcion",
-                "LEN(LTRIM(RTRIM(Descripcion))) > 0");
+                "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
                 "CK_Categorias_TipoCategoria",
-                "TipoCategoria IN ('Ingreso', 'Gasto')");
+                "CategoryType IN ('Ingreso', 'Gasto')");
         });
 
-        categoria.HasKey(item => item.ID_Categoria)
+        category.HasKey(item => item.CategoryId)
             .HasName("PK_Categorias");
 
-        categoria.Property(item => item.ID_Categoria)
+        category.Property(item => item.CategoryId)
             .ValueGeneratedOnAdd();
 
-        categoria.Property(item => item.Descripcion)
+        category.Property(item => item.Description)
             .HasMaxLength(100)
             .IsRequired();
 
-        categoria.Property(item => item.TipoCategoria)
+        category.Property(item => item.CategoryType)
             .HasMaxLength(10)
             .IsUnicode(false)
             .IsRequired();
 
-        categoria.Property(item => item.Activa)
+        category.Property(item => item.Active)
             .HasDefaultValue(true)
             .IsRequired();
 
-        categoria.HasIndex(item => new { item.Descripcion, item.TipoCategoria })
+        category.HasIndex(item => new { item.Description, item.CategoryType })
             .IsUnique()
             .HasDatabaseName("UQ_Categorias_Descripcion_TipoCategoria");
     }
 
-    private static void ConfigurarCuenta(ModelBuilder modelBuilder)
+    private static void ConfigureAccount(ModelBuilder modelBuilder)
     {
-        var cuenta = modelBuilder.Entity<Cuenta>();
+        var account = modelBuilder.Entity<Account>();
 
-        cuenta.ToTable("Cuentas", tabla =>
+        account.ToTable("Accounts", tabla =>
         {
+            // CORREGIDO: Se usa Description y AccountType en lugar de Descripcion y TipoCuenta
             tabla.HasCheckConstraint(
                 "CK_Cuentas_Descripcion",
-                "LEN(LTRIM(RTRIM(Descripcion))) > 0");
+                "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
                 "CK_Cuentas_TipoCuenta",
-                "TipoCuenta IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
+                "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
         });
 
-        cuenta.HasKey(item => item.ID_Cuenta)
+        account.HasKey(item => item.AccountId)
             .HasName("PK_Cuentas");
 
-        cuenta.Property(item => item.ID_Cuenta)
+        account.Property(item => item.AccountId)
             .ValueGeneratedOnAdd();
 
-        cuenta.Property(item => item.Descripcion)
+        account.Property(item => item.Description)
             .HasMaxLength(100)
             .IsRequired();
 
-        cuenta.Property(item => item.TipoCuenta)
+        account.Property(item => item.AccountType)
             .HasMaxLength(20)
             .IsUnicode(false)
             .IsRequired();
 
-        cuenta.Property(item => item.Activa)
+        account.Property(item => item.Active)
             .HasDefaultValue(true)
             .IsRequired();
 
-        cuenta.HasIndex(item => item.Descripcion)
+        account.HasIndex(item => item.Description)
             .IsUnique()
             .HasDatabaseName("UQ_Cuentas_Descripcion");
     }
 
-    private static void ConfigurarMovimiento(ModelBuilder modelBuilder)
+    private static void ConfigureMovement(ModelBuilder modelBuilder)
     {
-        var movimiento = modelBuilder.Entity<Movimiento>();
+        var movement = modelBuilder.Entity<Movement>();
 
-        movimiento.ToTable("Movimientos", tabla =>
+        movement.ToTable("Movements", tabla =>
         {
+            
             tabla.HasCheckConstraint(
                 "CK_Movimientos_Descripcion",
-                "LEN(LTRIM(RTRIM(Descripcion))) > 0");
+                "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
                 "CK_Movimientos_Importe",
-                "Importe > 0");
+                "Amount > 0");
             tabla.HasCheckConstraint(
                 "CK_Movimientos_TipoMovimiento",
-                "TipoMovimiento IN ('Ingreso', 'Gasto')");
+                "MovementType IN ('Ingreso', 'Gasto')");
         });
 
-        movimiento.HasKey(item => item.ID_Movimiento)
+        movement.HasKey(item => item.MovementId)
             .HasName("PK_Movimientos");
 
-        movimiento.Property(item => item.ID_Movimiento)
+        movement.Property(item => item.MovementId)
             .ValueGeneratedOnAdd();
 
-        movimiento.Property(item => item.Descripcion)
+        movement.Property(item => item.Description)
             .HasMaxLength(200)
             .IsRequired();
 
-        movimiento.Property(item => item.Importe)
+        movement.Property(item => item.Amount)
             .HasPrecision(18, 2)
             .IsRequired();
 
-        movimiento.Property(item => item.Fecha)
+        movement.Property(item => item.Date)
             .HasColumnType("date")
             .IsRequired();
 
-        movimiento.Property(item => item.TipoMovimiento)
+        movement.Property(item => item.MovementType)
             .HasMaxLength(10)
             .IsUnicode(false)
             .IsRequired();
 
-        movimiento.Property(item => item.Nota)
+        movement.Property(item => item.AdditionalInformation)
             .HasMaxLength(500);
 
-        movimiento.Property(item => item.FechaCreacion)
+        movement.Property(item => item.CreationDate)
             .HasColumnType("datetime2(0)")
             .HasDefaultValueSql("SYSDATETIME()")
             .ValueGeneratedOnAdd();
 
-        movimiento.HasOne(item => item.Categoria)
-            .WithMany(categoria => categoria.Movimientos)
-            .HasForeignKey(item => item.ID_Categoria)
+        movement.HasOne(item => item.Category)
+            .WithMany(category => category.Movements)
+            .HasForeignKey(item => item.CategoryId)
             .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_Movimientos_Categorias");
 
-        movimiento.HasOne(item => item.Cuenta)
-            .WithMany(cuenta => cuenta.Movimientos)
-            .HasForeignKey(item => item.ID_Cuenta)
+        movement.HasOne(item => item.Account)
+            .WithMany(account => account.Movements)
+            .HasForeignKey(item => item.AccountId)
             .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_Movimientos_Cuentas");
 
-        movimiento.HasIndex(item => item.Fecha)
+        movement.HasIndex(item => item.Date)
             .HasDatabaseName("IX_Movimientos_Fecha");
 
-        movimiento.HasIndex(item => item.ID_Categoria)
+        movement.HasIndex(item => item.CategoryId)
             .HasDatabaseName("IX_Movimientos_ID_Categoria");
 
-        movimiento.HasIndex(item => item.ID_Cuenta)
+        movement.HasIndex(item => item.AccountId)
             .HasDatabaseName("IX_Movimientos_ID_Cuenta");
 
-        movimiento.HasIndex(item => new { item.TipoMovimiento, item.Fecha })
+        movement.HasIndex(item => new { item.MovementType, item.Date })
             .HasDatabaseName("IX_Movimientos_TipoMovimiento_Fecha");
     }
 }
