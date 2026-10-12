@@ -3,6 +3,7 @@ using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.Persistence;
 using Finanzas.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
