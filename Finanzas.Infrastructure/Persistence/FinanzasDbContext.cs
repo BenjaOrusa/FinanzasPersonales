@@ -50,7 +50,7 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         category.ToTable("Categories", tabla =>
         {
-            // CORREGIDO: Se usa Description y CategoryType en lugar de Descripcion y TipoCategoria
+            
             tabla.HasCheckConstraint(
                 "CK_Categorias_Descripcion",
                 "LEN(LTRIM(RTRIM(Description))) > 0");
@@ -89,7 +89,7 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         account.ToTable("Accounts", tabla =>
         {
-            // CORREGIDO: Se usa Description y AccountType en lugar de Descripcion y TipoCuenta
+           
             tabla.HasCheckConstraint(
                 "CK_Cuentas_Descripcion",
                 "LEN(LTRIM(RTRIM(Description))) > 0");
