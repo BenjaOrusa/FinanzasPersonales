@@ -1,4 +1,4 @@
-using Finanzas.Api.Data;
+using Finanzas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
