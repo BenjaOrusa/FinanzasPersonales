@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import type { Category, MovementType } from '../types/finance'
 
-interface CategoriesPageProps { categories: Category[]; onAdd: (category: Omit<Category, 'id'>) => Promise<void>; onDelete: (id: number) => Promise<void> }
+interface CategoriesPageProps { categories: Category[]; onAdd: (category: Omit<Category, 'id'>) => Promise<void>; onDelete: (id: string) => Promise<void> }
 
 function CategoriesPage({ categories, onAdd, onDelete }: CategoriesPageProps) {
   const [name, setName] = useState('')
@@ -14,7 +14,7 @@ function CategoriesPage({ categories, onAdd, onDelete }: CategoriesPageProps) {
     catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar la categoría.') }
     finally { setIsSaving(false) }
   }
-  async function remove(id: number) {
+  async function remove(id: string) {
     try { setError(''); await onDelete(id) }
     catch (deleteError) { setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar la categoría.') }
   }

@@ -1,24 +1,22 @@
 import type { Account } from '../types/finance'
+import { apiRequest } from './apiClient'
 
-interface CuentaRespuesta { ID_Cuenta: number; Descripcion: string; TipoCuenta: 'Efectivo' | 'CuentaBancaria' | 'BilleteraVirtual'; Activa: boolean }
-const URL = 'https://localhost:7097/api/cuentas'
-const tipos = { Efectivo: 'cash', CuentaBancaria: 'bank', BilleteraVirtual: 'wallet' } as const
-const adaptar = (item: CuentaRespuesta): Account => ({ id: item.ID_Cuenta, name: item.Descripcion, type: tipos[item.TipoCuenta] })
+interface AccountResponse { AccountId: string; Description: string; AccountType: 'Efectivo' | 'CuentaBancaria' | 'BilleteraVirtual'; Active: boolean }
+const PATH = '/api/Account'
+const types = { Efectivo: 'cash', CuentaBancaria: 'bank', BilleteraVirtual: 'wallet' } as const
+const adapt = (item: AccountResponse): Account => ({ id: item.AccountId, name: item.Description, type: types[item.AccountType] })
 
 export async function obtenerCuentas(signal?: AbortSignal): Promise<Account[]> {
-  const response = await fetch(URL, { signal })
-  if (!response.ok) throw new Error(`No se pudieron cargar las cuentas (${response.status}).`)
-  return ((await response.json()) as CuentaRespuesta[]).map(adaptar)
+  const response = await apiRequest<AccountResponse[]>(PATH, { signal })
+  return response.map(adapt)
 }
 
 export async function crearCuenta(account: Omit<Account, 'id'>): Promise<Account> {
-  const tiposApi = { cash: 'Efectivo', bank: 'CuentaBancaria', wallet: 'BilleteraVirtual' }
-  const response = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Descripcion: account.name, TipoCuenta: tiposApi[account.type] }) })
-  if (!response.ok) throw new Error(`No se pudo crear la cuenta (${response.status}).`)
-  return adaptar((await response.json()) as CuentaRespuesta)
+  const apiTypes = { cash: 'Efectivo', bank: 'CuentaBancaria', wallet: 'BilleteraVirtual' }
+  const response = await apiRequest<AccountResponse>(PATH, { method: 'POST', body: JSON.stringify({ Description: account.name, AccountType: apiTypes[account.type] }) })
+  return adapt(response)
 }
 
-export async function eliminarCuenta(id: number): Promise<void> {
-  const response = await fetch(`${URL}/${id}`, { method: 'DELETE' })
-  if (!response.ok) throw new Error(response.status === 409 ? 'La cuenta tiene movimientos asociados.' : `No se pudo eliminar la cuenta (${response.status}).`)
+export async function eliminarCuenta(id: string): Promise<void> {
+  await apiRequest<void>(`${PATH}/${id}`, { method: 'DELETE' })
 }

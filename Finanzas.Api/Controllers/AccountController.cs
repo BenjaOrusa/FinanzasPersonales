@@ -24,7 +24,7 @@ public class AccountController(FinanzasDbContext context) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<AccountRequestDTO>> Create(AccountRequestDTO accountRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AccountResponseDTO>> Create(AccountRequestDTO accountRequest, CancellationToken cancellationToken)
     {
         var description = accountRequest.Description.Trim();
 

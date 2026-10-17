@@ -1,4 +1,4 @@
-namespace Finanzas.Api.Contracts.Movements;
+namespace Finanzas.Application.DTOs.Response.Movements;
 
 /// <summary>
 /// Define el JSON que la API devuelve al frontend para representar un movimiento.

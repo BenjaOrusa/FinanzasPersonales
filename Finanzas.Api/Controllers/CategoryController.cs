@@ -13,18 +13,18 @@ namespace Finanzas.Api.Controllers;
 public class CategoryController(FinanzasDbContext context) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<CategoryRequestDTO>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<CategoryResponseDTO>>> GetAll(CancellationToken cancellationToken)
     {
         var categories = await context.Categories.AsNoTracking()
             .OrderBy(item => item.Description)
-            .Select(item => new Category { CategoryId = item.CategoryId, Description = item.Description, 
+            .Select(item => new CategoryResponseDTO { CategoryId = item.CategoryId, Description = item.Description,
                 CategoryType = item.CategoryType, Active = item.Active })
             .ToListAsync(cancellationToken);
         return Ok(categories);
     }
 
     [HttpPost]
-    public async Task<ActionResult<CategoryRequestDTO>> Create(CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<CategoryResponseDTO>> Create(CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
     {
         var description = categoryRequest.Description.Trim();
 

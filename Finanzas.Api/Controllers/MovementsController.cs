@@ -1,5 +1,5 @@
-using Finanzas.Api.Contracts.Movements;
 using Finanzas.Application.DTOs.Request.Movements;
+using Finanzas.Application.DTOs.Response.Movements;
 using Finanzas.Domain.Models;
 using Finanzas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -66,7 +66,7 @@ public class MovementController(FinanzasDbContext context) : ControllerBase
             MovementType = movementRequest.MovementType,
             CategoryId = movementRequest.CategoryId,
             AccountId = movementRequest.AccountId,
-            AdditionalInformation = NormalizarNota(movementRequest.AdditionalInformation)
+            AdditionalInformation = NormalizeAdditionalInformation(movementRequest.AdditionalInformation)
         };
 
         context.Movements.Add(movement);
@@ -105,7 +105,7 @@ public class MovementController(FinanzasDbContext context) : ControllerBase
         movement.MovementType = movementRequest.MovementType;
         movement.CategoryId = movementRequest.CategoryId;
         movement.AccountId = movementRequest.AccountId;
-        movement.AdditionalInformation = NormalizarNota(movementRequest.AdditionalInformation);
+        movement.AdditionalInformation = NormalizeAdditionalInformation(movementRequest.AdditionalInformation);
 
         await context.SaveChangesAsync(cancellationToken);
 
@@ -162,6 +162,6 @@ public class MovementController(FinanzasDbContext context) : ControllerBase
 
             }).SingleOrDefaultAsync(cancellationToken);
 
-    private static string? NormalizarNota(string? nota) =>
-        string.IsNullOrWhiteSpace(nota) ? null : nota.Trim();
+    private static string? NormalizeAdditionalInformation(string? additionalInformation) =>
+        string.IsNullOrWhiteSpace(additionalInformation) ? null : additionalInformation.Trim();
 }

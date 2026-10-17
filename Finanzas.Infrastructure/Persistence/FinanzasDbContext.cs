@@ -52,15 +52,15 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         {
             // CORREGIDO: Se usa Description y CategoryType en lugar de Descripcion y TipoCategoria
             tabla.HasCheckConstraint(
-                "CK_Categorias_Descripcion",
+                "CK_Categories_Description",
                 "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
-                "CK_Categorias_TipoCategoria",
+                "CK_Categories_CategoryType",
                 "CategoryType IN ('Ingreso', 'Gasto')");
         });
 
         category.HasKey(item => item.CategoryId)
-            .HasName("PK_Categorias");
+            .HasName("PK_Categories");
 
         category.Property(item => item.CategoryId)
             .ValueGeneratedOnAdd();
@@ -80,7 +80,7 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         category.HasIndex(item => new { item.Description, item.CategoryType })
             .IsUnique()
-            .HasDatabaseName("UQ_Categorias_Descripcion_TipoCategoria");
+            .HasDatabaseName("UQ_Categories_Description_CategoryType");
     }
 
     private static void ConfigureAccount(ModelBuilder modelBuilder)
@@ -91,15 +91,15 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         {
             // CORREGIDO: Se usa Description y AccountType en lugar de Descripcion y TipoCuenta
             tabla.HasCheckConstraint(
-                "CK_Cuentas_Descripcion",
+                "CK_Accounts_Description",
                 "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
-                "CK_Cuentas_TipoCuenta",
+                "CK_Accounts_AccountType",
                 "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
         });
 
         account.HasKey(item => item.AccountId)
-            .HasName("PK_Cuentas");
+            .HasName("PK_Accounts");
 
         account.Property(item => item.AccountId)
             .ValueGeneratedOnAdd();
@@ -119,7 +119,7 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         account.HasIndex(item => item.Description)
             .IsUnique()
-            .HasDatabaseName("UQ_Cuentas_Descripcion");
+            .HasDatabaseName("UQ_Accounts_Description");
     }
 
     private static void ConfigureMovement(ModelBuilder modelBuilder)
@@ -130,18 +130,18 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         {
             
             tabla.HasCheckConstraint(
-                "CK_Movimientos_Descripcion",
+                "CK_Movements_Description",
                 "LEN(LTRIM(RTRIM(Description))) > 0");
             tabla.HasCheckConstraint(
-                "CK_Movimientos_Importe",
+                "CK_Movements_Amount",
                 "Amount > 0");
             tabla.HasCheckConstraint(
-                "CK_Movimientos_TipoMovimiento",
+                "CK_Movements_MovementType",
                 "MovementType IN ('Ingreso', 'Gasto')");
         });
 
         movement.HasKey(item => item.MovementId)
-            .HasName("PK_Movimientos");
+            .HasName("PK_Movements");
 
         movement.Property(item => item.MovementId)
             .ValueGeneratedOnAdd();
@@ -175,24 +175,24 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
             .WithMany(category => category.Movements)
             .HasForeignKey(item => item.CategoryId)
             .OnDelete(DeleteBehavior.NoAction)
-            .HasConstraintName("FK_Movimientos_Categorias");
+            .HasConstraintName("FK_Movements_Categories");
 
         movement.HasOne(item => item.Account)
             .WithMany(account => account.Movements)
             .HasForeignKey(item => item.AccountId)
             .OnDelete(DeleteBehavior.NoAction)
-            .HasConstraintName("FK_Movimientos_Cuentas");
+            .HasConstraintName("FK_Movements_Accounts");
 
         movement.HasIndex(item => item.Date)
-            .HasDatabaseName("IX_Movimientos_Fecha");
+            .HasDatabaseName("IX_Movements_Date");
 
         movement.HasIndex(item => item.CategoryId)
-            .HasDatabaseName("IX_Movimientos_ID_Categoria");
+            .HasDatabaseName("IX_Movements_CategoryId");
 
         movement.HasIndex(item => item.AccountId)
-            .HasDatabaseName("IX_Movimientos_ID_Cuenta");
+            .HasDatabaseName("IX_Movements_AccountId");
 
         movement.HasIndex(item => new { item.MovementType, item.Date })
-            .HasDatabaseName("IX_Movimientos_TipoMovimiento_Fecha");
+            .HasDatabaseName("IX_Movements_MovementType_Date");
     }
 }
