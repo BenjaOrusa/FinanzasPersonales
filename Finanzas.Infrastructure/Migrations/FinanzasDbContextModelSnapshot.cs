@@ -160,6 +160,77 @@ namespace Finanzas.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Finanzas.Domain.Models.TypeOfUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_TypeOfUsers");
+
+                    b.HasIndex("Description")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_TypeOfUsers_Description");
+
+                    b.ToTable("TypeOfUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Active")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Surname")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TypeOfUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Users");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Users_Email");
+
+                    b.HasIndex("TypeOfUserId");
+
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Email", "LEN(LTRIM(RTRIM(Email))) > 0");
+                        });
+                });
+
             modelBuilder.Entity("Finanzas.Domain.Models.Movement", b =>
                 {
                     b.HasOne("Finanzas.Domain.Models.Account", "Account")
@@ -181,6 +252,18 @@ namespace Finanzas.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Finanzas.Domain.Models.User", b =>
+                {
+                    b.HasOne("Finanzas.Domain.Models.TypeOfUser", "TypeOfUser")
+                        .WithMany("Users")
+                        .HasForeignKey("TypeOfUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Users_TypeOfUsers");
+
+                    b.Navigation("TypeOfUser");
+                });
+
             modelBuilder.Entity("Finanzas.Domain.Models.Account", b =>
                 {
                     b.Navigation("Movements");
@@ -189,6 +272,11 @@ namespace Finanzas.Infrastructure.Migrations
             modelBuilder.Entity("Finanzas.Domain.Models.Category", b =>
                 {
                     b.Navigation("Movements");
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.TypeOfUser", b =>
+                {
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
