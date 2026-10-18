@@ -13,28 +13,31 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
 
 
-    /// <summary>
-    /// Conjunto consultable asociado a la tabla Categorias.
-    /// </summary>
+
+    // Conjunto consultable asociado a la tabla Categorias.
     public DbSet<Category> Categories => Set<Category>();
 
-    /// <summary>
-    /// Conjunto consultable asociado a la tabla Cuentas.
-    /// </summary>
+
+    // Conjunto consultable asociado a la tabla Cuentas.
     public DbSet<Account> Accounts => Set<Account>();
 
-    /// <summary>
-    /// Conjunto consultable asociado a la tabla Movimientos.
-    /// </summary>
+    
+    // Conjunto consultable asociado a la tabla Movimientos.
     public DbSet<Movement> Movements => Set<Movement>();
 
 
+    
+    // Conjunto consultable asociado a la tabla Usuarios.
+    public DbSet<User> Users => Set<User>();
+
+   
+    // Conjunto consultable asociado a la tabla Tipos de Usuario.
+    public DbSet<TypeOfUser> TypeOfUsers => Set<TypeOfUser>();
 
 
 
-    /// <summary>
-    /// Describe explícitamente cómo se relacionan las clases C# con el esquema SQL existente.
-    /// </summary>
+
+    // Describe explícitamente cómo se relacionan las clases C# con el esquema SQL existente.
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -42,6 +45,8 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         ConfigureCategory(modelBuilder);
         ConfigureAccount(modelBuilder);
         ConfigureMovement(modelBuilder);
+        ConfigureTypeOfUser(modelBuilder); 
+        ConfigureUser(modelBuilder);       
     }
 
     private static void ConfigureCategory(ModelBuilder modelBuilder)
@@ -194,5 +199,76 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         movement.HasIndex(item => new { item.MovementType, item.Date })
             .HasDatabaseName("IX_Movimientos_TipoMovimiento_Fecha");
+    }
+
+    private static void ConfigureTypeOfUser(ModelBuilder modelBuilder)
+    {
+        var typeOfUser = modelBuilder.Entity<TypeOfUser>();
+
+        typeOfUser.ToTable("TypeOfUsers");
+
+        typeOfUser.HasKey(item => item.Id)
+            .HasName("PK_TypeOfUsers");
+
+        typeOfUser.Property(item => item.Id)
+            .ValueGeneratedOnAdd();
+
+        typeOfUser.Property(item => item.Description)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        typeOfUser.HasIndex(item => item.Description)
+            .IsUnique()
+            .HasDatabaseName("UQ_TypeOfUsers_Description");
+    }
+
+    private static void ConfigureUser(ModelBuilder modelBuilder)
+    {
+        var user = modelBuilder.Entity<User>();
+
+        user.ToTable("Users", tabla =>
+        {
+            tabla.HasCheckConstraint(
+                "CK_Users_Email",
+                "LEN(LTRIM(RTRIM(Email))) > 0");
+        });
+
+        user.HasKey(item => item.Id)
+            .HasName("PK_Users");
+
+        user.Property(item => item.Id)
+            .ValueGeneratedOnAdd();
+
+        user.Property(item => item.Email)
+            .HasMaxLength(150)
+            .IsUnicode(false)
+            .IsRequired();
+
+        user.Property(item => item.PasswordHash)
+            .HasMaxLength(255)
+            .IsRequired();
+
+        user.Property(item => item.Name)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        user.Property(item => item.Surname)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        user.Property(item => item.Active)
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        // Relación con TypeOfUser
+        user.HasOne(item => item.TypeOfUser)
+            .WithMany(type => type.Users)
+            .HasForeignKey(item => item.TypeOfUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Users_TypeOfUsers");
+
+        user.HasIndex(item => item.Email)
+            .IsUnique()
+            .HasDatabaseName("UQ_Users_Email");
     }
 }
