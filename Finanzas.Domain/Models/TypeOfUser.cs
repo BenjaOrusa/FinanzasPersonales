@@ -16,7 +16,7 @@ namespace Finanzas.Domain.Models
         {
         }
 
-        protected TypeOfUser(string description)
+        public TypeOfUser(string description)
         {
             if (string.IsNullOrWhiteSpace(description))
                 throw new ArgumentException("La descripción es obligatoria.", nameof(description));

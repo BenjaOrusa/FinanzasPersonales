@@ -2,6 +2,7 @@
 using Finanzas.Application.DTOs.Response.Auth;
 using Finanzas.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finanzas.Api.Controllers
@@ -19,7 +20,7 @@ namespace Finanzas.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequestDTO request, CancellationToken cancellationToken)
         {
             var login = await authService.AuthenticateAsync(request, cancellationToken);
 
@@ -30,5 +31,20 @@ namespace Finanzas.Api.Controllers
 
             return Ok(login);
         }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request, CancellationToken cancellationToken)
+        {
+            var result = await authService.RegisterAsync(request, cancellationToken);
+
+            if (!result)
+            {
+                return BadRequest("El email ya se encuentra registrado.");
+            }
+
+            return Ok("Usuario registrado correctamente.");
+        }
+
     }
 }

@@ -8,6 +8,7 @@ namespace Finanzas.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<LoginResponse?> AuthenticateAsync(LoginRequest request, CancellationToken cancellationToken = default);
+        Task<LoginResponse?> AuthenticateAsync(LoginRequestDTO request, CancellationToken cancellationToken = default);
+        Task<bool> RegisterAsync(RegisterRequestDTO request, CancellationToken cancellationToken = default);
     }
 }

@@ -4,6 +4,6 @@ using System.Text;
 
 namespace Finanzas.Application.DTOs.Request.Auth
 {
-    public record LoginRequest(string Email, string Password);
+    public record LoginRequestDTO(string Email, string Password);
     
 }
