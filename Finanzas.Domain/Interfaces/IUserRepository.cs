@@ -8,5 +8,10 @@ namespace Finanzas.Application.Interfaces
     public interface IUserRepository
     {
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<bool> ExistsEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task AddAsync(User user, CancellationToken cancellationToken = default);
+        Task<TypeOfUser?> GetTypeOfUserByDescriptionAsync(string description, CancellationToken cancellationToken = default);
+        Task AddTypeOfUserAsync(TypeOfUser typeOfUser, CancellationToken cancellationToken = default);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
