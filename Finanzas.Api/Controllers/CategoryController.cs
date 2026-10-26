@@ -1,11 +1,13 @@
 using Finanzas.Application.DTOs.Request.Categories;
 using Finanzas.Application.DTOs.Response.Categories;
 using Finanzas.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finanzas.Api.Controllers
 {
     /// Expone las categorías almacenadas en SQL Server
+    [Authorize(Policy = Policies.StandardUsers)]
     [ApiController]
     [Route("api/[controller]")]
     public class CategoryController : ControllerBase
@@ -17,10 +19,12 @@ namespace Finanzas.Api.Controllers
             this.categoryService = categoryService;
         }
 
+
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<CategoryResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
-            var categories = await categoryService.GetAllAsync(cancellationToken);
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var categories = await categoryService.GetAllAsync(userEmail, cancellationToken);
             return Ok(categories);
         }
 
@@ -29,7 +33,8 @@ namespace Finanzas.Api.Controllers
         {
             try
             {
-                var response = await categoryService.CreateAsync(categoryRequest, cancellationToken);
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await categoryService.CreateAsync(userEmail, categoryRequest, cancellationToken);
                 return CreatedAtAction(nameof(GetAll), new { id = response.CategoryId }, response);
             }
             catch (ArgumentException ex)
@@ -40,22 +45,27 @@ namespace Finanzas.Api.Controllers
             {
                 return Conflict(ex.Message);
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
         }
 
-        [HttpDelete("{categoryId:guid}")]
-        public async Task<IActionResult> Delete(Guid categoryId, CancellationToken cancellationToken)
+        [HttpPatch("{categoryId:Guid}/deactivate")]
+        public async Task<IActionResult> Deactivate(Guid categoryId, CancellationToken cancellationToken)
         {
             try
             {
-                var deleted = await categoryService.DeleteAsync(categoryId, cancellationToken);
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var success = await categoryService.DeactivateAsync(userEmail, categoryId, cancellationToken);
 
-                if (!deleted) return NotFound();
+                if (!success) return NotFound();
 
                 return NoContent();
             }
-            catch (InvalidOperationException ex)
+            catch (UnauthorizedAccessException ex)
             {
-                return Conflict(ex.Message);
+                return Unauthorized(ex.Message);
             }
         }
     }

@@ -5,10 +5,10 @@ namespace Finanzas.Application.Interfaces
 {
     public interface IMovementService
     {
-        Task<IReadOnlyList<MovementResponseDTO>> GetAllAsync(CancellationToken cancellationToken);
-        Task<MovementResponseDTO?> GetByIdAsync(Guid movementId, CancellationToken cancellationToken);
-        Task<(MovementResponseDTO? Response, string? Error)> CreateAsync(MovementRequestDTO request, CancellationToken cancellationToken);
-        Task<(MovementResponseDTO? Response, string? Error)> UpdateAsync(Guid movementId, MovementRequestDTO request, CancellationToken cancellationToken);
-        Task<bool> DeleteAsync(Guid movementId, CancellationToken cancellationToken);
+        Task<IReadOnlyList<MovementResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken);
+        Task<MovementResponseDTO?> GetByIdAsync(string userEmail, Guid movementId, CancellationToken cancellationToken);
+        Task<MovementResponseDTO> CreateAsync(string userEmail, MovementRequestDTO request, CancellationToken cancellationToken);
+        Task<MovementResponseDTO?> UpdateAsync(string userEmail, Guid movementId, MovementRequestDTO request, CancellationToken cancellationToken);
+        Task<bool> DeleteAsync(string userEmail, Guid movementId, CancellationToken cancellationToken);
     }
 }

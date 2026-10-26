@@ -1,4 +1,5 @@
-﻿using Finanzas.Application.Interfaces;
+﻿
+using Finanzas.Domain.Interfaces;
 using Finanzas.Domain.Models;
 using Finanzas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

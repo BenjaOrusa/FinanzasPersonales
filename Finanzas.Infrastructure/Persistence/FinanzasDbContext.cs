@@ -4,9 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Finanzas.Infrastructure.Persistence;
 
-/// <summary>
-/// Representa una sesión de trabajo de Entity Framework Core con la base FinanzasPersonales.
-/// </summary>
+// Representa una sesión de trabajo de Entity Framework Core con la base FinanzasPersonales.
 public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
     : DbContext(options)
 {
@@ -35,6 +33,9 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
     public DbSet<TypeOfUser> TypeOfUsers => Set<TypeOfUser>();
 
 
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+
 
 
     // Describe explícitamente cómo se relacionan las clases C# con el esquema SQL existente.
@@ -46,7 +47,9 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         ConfigureAccount(modelBuilder);
         ConfigureMovement(modelBuilder);
         ConfigureTypeOfUser(modelBuilder); 
-        ConfigureUser(modelBuilder);       
+        ConfigureUser(modelBuilder);
+        ConfigureCurrency(modelBuilder);
+        ConfigureExchangeRate(modelBuilder);
     }
 
     private static void ConfigureCategory(ModelBuilder modelBuilder)
@@ -55,17 +58,12 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         category.ToTable("Categories", tabla =>
         {
-            
-            tabla.HasCheckConstraint(
-                "CK_Categorias_Descripcion",
-                "LEN(LTRIM(RTRIM(Description))) > 0");
-            tabla.HasCheckConstraint(
-                "CK_Categorias_TipoCategoria",
-                "CategoryType IN ('Ingreso', 'Gasto')");
+            tabla.HasCheckConstraint("CK_Categories_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+            tabla.HasCheckConstraint("CK_Categories_CategoryType", "CategoryType IN ('Ingreso', 'Gasto')");
         });
 
         category.HasKey(item => item.CategoryId)
-            .HasName("PK_Categorias");
+            .HasName("PK_Categories");
 
         category.Property(item => item.CategoryId)
             .ValueGeneratedOnAdd();
@@ -83,9 +81,17 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
             .HasDefaultValue(true)
             .IsRequired();
 
-        category.HasIndex(item => new { item.Description, item.CategoryType })
+        // Relación con User
+        category.HasOne(item => item.User)
+            .WithMany(user => user.Categories)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Categories_Users");
+
+        // Índice único por usuario, nombre y tipo de categoría
+        category.HasIndex(item => new { item.UserId, item.Description, item.CategoryType })
             .IsUnique()
-            .HasDatabaseName("UQ_Categorias_Descripcion_TipoCategoria");
+            .HasDatabaseName("UQ_Categories_User_Description_Type");
     }
 
     private static void ConfigureAccount(ModelBuilder modelBuilder)
@@ -94,17 +100,12 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         account.ToTable("Accounts", tabla =>
         {
-           
-            tabla.HasCheckConstraint(
-                "CK_Cuentas_Descripcion",
-                "LEN(LTRIM(RTRIM(Description))) > 0");
-            tabla.HasCheckConstraint(
-                "CK_Cuentas_TipoCuenta",
-                "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
+            tabla.HasCheckConstraint("CK_Accounts_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+            tabla.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
         });
 
         account.HasKey(item => item.AccountId)
-            .HasName("PK_Cuentas");
+            .HasName("PK_Accounts");
 
         account.Property(item => item.AccountId)
             .ValueGeneratedOnAdd();
@@ -118,13 +119,33 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
             .IsUnicode(false)
             .IsRequired();
 
+        account.Property(item => item.Balance)
+            .HasPrecision(18, 2)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         account.Property(item => item.Active)
             .HasDefaultValue(true)
             .IsRequired();
 
-        account.HasIndex(item => item.Description)
+        // Relación con User
+        account.HasOne(item => item.User)
+            .WithMany(user => user.Accounts)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Accounts_Users");
+
+        // Relación con Currency
+        account.HasOne(item => item.Currency)
+            .WithMany(currency => currency.Accounts)
+            .HasForeignKey(item => item.CurrencyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Accounts_Currencies");
+
+        // Índice único por usuario y nombre de cuenta
+        account.HasIndex(item => new { item.UserId, item.Description })
             .IsUnique()
-            .HasDatabaseName("UQ_Cuentas_Descripcion");
+            .HasDatabaseName("UQ_Accounts_User_Description");
     }
 
     private static void ConfigureMovement(ModelBuilder modelBuilder)
@@ -133,26 +154,19 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         movement.ToTable("Movements", tabla =>
         {
-            
-            tabla.HasCheckConstraint(
-                "CK_Movimientos_Descripcion",
-                "LEN(LTRIM(RTRIM(Description))) > 0");
-            tabla.HasCheckConstraint(
-                "CK_Movimientos_Importe",
-                "Amount > 0");
-            tabla.HasCheckConstraint(
-                "CK_Movimientos_TipoMovimiento",
-                "MovementType IN ('Ingreso', 'Gasto')");
+            tabla.HasCheckConstraint("CK_Movements_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+            tabla.HasCheckConstraint("CK_Movements_Amount", "Amount > 0");
+            tabla.HasCheckConstraint("CK_Movements_MovementType", "MovementType IN ('Ingreso', 'Gasto')");
         });
 
         movement.HasKey(item => item.MovementId)
-            .HasName("PK_Movimientos");
+            .HasName("PK_Movements");
 
         movement.Property(item => item.MovementId)
             .ValueGeneratedOnAdd();
 
         movement.Property(item => item.Description)
-            .HasMaxLength(200)
+            .HasMaxLength(255)
             .IsRequired();
 
         movement.Property(item => item.Amount)
@@ -168,37 +182,55 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
             .IsUnicode(false)
             .IsRequired();
 
-        movement.Property(item => item.AdditionalInformation)
-            .HasMaxLength(500);
+        movement.Property(item => item.Note)
+            .HasMaxLength(255);
 
         movement.Property(item => item.CreationDate)
             .HasColumnType("datetime2(0)")
             .HasDefaultValueSql("SYSDATETIME()")
             .ValueGeneratedOnAdd();
 
-        movement.HasOne(item => item.Category)
-            .WithMany(category => category.Movements)
-            .HasForeignKey(item => item.CategoryId)
-            .OnDelete(DeleteBehavior.NoAction)
-            .HasConstraintName("FK_Movimientos_Categorias");
+        // Relaciones: 
 
+        //User
+        movement.HasOne(item => item.User)
+            .WithMany(user => user.Movements)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Movements_Users");
+
+        //Account
         movement.HasOne(item => item.Account)
             .WithMany(account => account.Movements)
             .HasForeignKey(item => item.AccountId)
             .OnDelete(DeleteBehavior.NoAction)
-            .HasConstraintName("FK_Movimientos_Cuentas");
+            .HasConstraintName("FK_Movements_Accounts");
 
+        //Category
+        movement.HasOne(item => item.Category)
+            .WithMany(category => category.Movements)
+            .HasForeignKey(item => item.CategoryId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName("FK_Movements_Categories");
+        //Currency
+        movement.HasOne(item => item.Currency)
+            .WithMany(currency => currency.Movements)
+            .HasForeignKey(item => item.CurrencyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Movements_Currencies");
+
+        // Índices de rendimiento
         movement.HasIndex(item => item.Date)
-            .HasDatabaseName("IX_Movimientos_Fecha");
+            .HasDatabaseName("IX_Movements_Date");
 
-        movement.HasIndex(item => item.CategoryId)
-            .HasDatabaseName("IX_Movimientos_ID_Categoria");
+        movement.HasIndex(item => item.UserId)
+            .HasDatabaseName("IX_Movements_UserId");
 
         movement.HasIndex(item => item.AccountId)
-            .HasDatabaseName("IX_Movimientos_ID_Cuenta");
+            .HasDatabaseName("IX_Movements_AccountId");
 
-        movement.HasIndex(item => new { item.MovementType, item.Date })
-            .HasDatabaseName("IX_Movimientos_TipoMovimiento_Fecha");
+        movement.HasIndex(item => item.CategoryId)
+            .HasDatabaseName("IX_Movements_CategoryId");
     }
 
     private static void ConfigureTypeOfUser(ModelBuilder modelBuilder)
@@ -228,9 +260,8 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
 
         user.ToTable("Users", tabla =>
         {
-            tabla.HasCheckConstraint(
-                "CK_Users_Email",
-                "LEN(LTRIM(RTRIM(Email))) > 0");
+            tabla.HasCheckConstraint("CK_Users_Email", "LEN(LTRIM(RTRIM(Email))) > 0");
+            tabla.HasCheckConstraint("CK_Users_Status", "Status IN ('Activo', 'Inactivo', 'Bloqueado')");
         });
 
         user.HasKey(item => item.Id)
@@ -256,19 +287,78 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
             .HasMaxLength(100)
             .IsRequired();
 
-        user.Property(item => item.Active)
-            .HasDefaultValue(true)
-            .IsRequired();
+        user.Property(item => item.Status)
+                        .HasMaxLength(20)
+                        .IsRequired()
+                        .HasDefaultValue("Activo");
 
         // Relación con TypeOfUser
         user.HasOne(item => item.TypeOfUser)
-            .WithMany(type => type.Users)
-            .HasForeignKey(item => item.TypeOfUserId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .HasConstraintName("FK_Users_TypeOfUsers");
+                        .WithMany(type => type.Users)
+                        .HasForeignKey(item => item.TypeOfUserId)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Users_TypeOfUsers");
 
         user.HasIndex(item => item.Email)
             .IsUnique()
             .HasDatabaseName("UQ_Users_Email");
+    }
+
+    private static void ConfigureCurrency(ModelBuilder modelBuilder)
+    {
+        var currency = modelBuilder.Entity<Currency>();
+
+        currency.ToTable("Currencies", tabla =>
+        {
+            tabla.HasCheckConstraint("CK_Currencies_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+        });
+
+        currency.HasKey(item => item.Id)
+            .HasName("PK_Currencies");
+
+        currency.Property(item => item.Id)
+            .ValueGeneratedOnAdd();
+
+        currency.Property(item => item.Description)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        currency.HasIndex(item => item.Description)
+            .IsUnique()
+            .HasDatabaseName("UQ_Currencies_Description");
+    }
+
+    private static void ConfigureExchangeRate(ModelBuilder modelBuilder)
+    {
+        var exchangeRate = modelBuilder.Entity<ExchangeRate>();
+
+        exchangeRate.ToTable("ExchangeRates", tabla =>
+        {
+            tabla.HasCheckConstraint("CK_ExchangeRates_Value", "Value > 0");
+        });
+
+        // Clave Primaria Compuesta 
+        exchangeRate.HasKey(item => new { item.BaseCurrencyId, item.TargetCurrencyId, item.Date })
+            .HasName("PK_ExchangeRates");
+
+        exchangeRate.Property(item => item.Date)
+            .HasColumnType("date")
+            .IsRequired();
+
+        exchangeRate.Property(item => item.Value)
+            .HasPrecision(18, 6)
+            .IsRequired();
+
+        exchangeRate.HasOne(item => item.BaseCurrency)
+            .WithMany()
+            .HasForeignKey(item => item.BaseCurrencyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_ExchangeRates_BaseCurrency");
+
+        exchangeRate.HasOne(item => item.TargetCurrency)
+            .WithMany()
+            .HasForeignKey(item => item.TargetCurrencyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_ExchangeRates_TargetCurrency");
     }
 }

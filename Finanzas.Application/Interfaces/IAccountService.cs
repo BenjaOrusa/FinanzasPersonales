@@ -8,8 +8,8 @@ namespace Finanzas.Application.Interfaces
 {
     public interface IAccountService
     {
-        Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(CancellationToken cancellationToken);
-        Task<AccountResponseDTO> CreateAsync(AccountRequestDTO request, CancellationToken cancellationToken);
-        Task<bool> DeleteAsync(Guid accountId, CancellationToken cancellationToken);
+        Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken);
+        Task<AccountResponseDTO> CreateAsync(string userEmail, AccountRequestDTO request, CancellationToken cancellationToken);
+        Task<bool> DeactivateAsync(string userEmail, Guid accountId, CancellationToken cancellationToken);
     }
 }

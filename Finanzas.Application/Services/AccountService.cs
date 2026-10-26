@@ -13,26 +13,36 @@ namespace Finanzas.Application.Services
     {
 
         private readonly IAccountRepository accountRepository;
-        public AccountService(IAccountRepository accountRepository)
+        private readonly IUserService userService;
+
+        public AccountService(IAccountRepository accountRepository, IUserService userService)
         {
             this.accountRepository = accountRepository;
+            this.userService = userService;
         }
 
-        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(CancellationToken cancellationToken)
+
+
+
+        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken)
         {
-            var accounts = await accountRepository.GetAllAsync(cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var accounts = await accountRepository.GetAllByUserIdAsync(user.Id, cancellationToken);
 
             return accounts.Select(item => new AccountResponseDTO
             {
                 AccountId = item.AccountId,
                 Description = item.Description,
                 AccountType = item.AccountType,
+                Balance = item.Balance,
                 Active = item.Active
             }).ToList();
         }
 
-        public async Task<AccountResponseDTO> CreateAsync(AccountRequestDTO request, CancellationToken cancellationToken)
+        public async Task<AccountResponseDTO> CreateAsync(string userEmail, AccountRequestDTO request, CancellationToken cancellationToken)
         {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+
             var description = request.Description.Trim();
 
             if (description.Length is 0 or > 100 || request.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
@@ -40,17 +50,18 @@ namespace Finanzas.Application.Services
                 throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
             }
 
-            if (await accountRepository.ExistsByDescriptionAsync(description, cancellationToken))
+            if (request.CurrencyId == Guid.Empty)
             {
-                throw new InvalidOperationException("Ya existe una cuenta con esa descripción.");
+                throw new ArgumentException("Debe especificar una moneda válida para la cuenta.");
             }
 
-            var account = new Account
+            if (await accountRepository.ExistsByDescriptionAndUserAsync(description, user.Id, cancellationToken))
             {
-                Description = description,
-                AccountType = request.AccountType,
-                Active = true
-            };
+                throw new InvalidOperationException("Ya existe una cuenta con esa descripción para este usuario.");
+            }
+
+            // Uso del constructor blindado de la entidad Account
+            var account = new Account(description, request.AccountType, user.Id, request.CurrencyId);
 
             accountRepository.Add(account);
             await accountRepository.SaveChangesAsync(cancellationToken);
@@ -60,22 +71,21 @@ namespace Finanzas.Application.Services
                 AccountId = account.AccountId,
                 Description = account.Description,
                 AccountType = account.AccountType,
+                Balance = account.Balance,
                 Active = account.Active
             };
         }
 
-        public async Task<bool> DeleteAsync(Guid accountId, CancellationToken cancellationToken)
+        public async Task<bool> DeactivateAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
         {
-            var account = await accountRepository.GetByIdAsync(accountId, cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
 
             if (account is null) return false;
 
-            if (await accountRepository.HasMovementsAsync(accountId, cancellationToken))
-            {
-                throw new InvalidOperationException("La cuenta tiene movimientos asociados.");
-            }
+            // Ejecutamos la baja lógica del dominio en lugar de un Remove físico
+            account.Deactivate();
 
-            accountRepository.Remove(account);
             await accountRepository.SaveChangesAsync(cancellationToken);
 
             return true;

@@ -18,17 +18,24 @@ namespace Finanzas.Infrastructure.Repositories
         }
 
 
-        public async Task<IReadOnlyList<Account>> GetAllAsync(CancellationToken cancellationToken) =>
-            await context.Accounts.AsNoTracking().OrderBy(item => item.Description).ToListAsync(cancellationToken);
+        public async Task<IReadOnlyList<Account>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
+                    await context.Accounts
+                        .AsNoTracking()
+                        .Where(item => item.UserId == userId)
+                        .OrderBy(item => item.Description)
+                        .ToListAsync(cancellationToken);
 
-        public async Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-            await context.Accounts.FindAsync([id], cancellationToken);
+        public async Task<Account?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken) =>
+            await context.Accounts
+                .FirstOrDefaultAsync(item => item.AccountId == id && item.UserId == userId, cancellationToken);
 
-        public async Task<bool> ExistsByDescriptionAsync(string description, CancellationToken cancellationToken) =>
-            await context.Accounts.AnyAsync(item => item.Description == description, cancellationToken);
+        public async Task<bool> ExistsByDescriptionAndUserAsync(string description, Guid userId, CancellationToken cancellationToken) =>
+            await context.Accounts
+                .AnyAsync(item => item.UserId == userId && item.Description == description, cancellationToken);
 
         public async Task<bool> HasMovementsAsync(Guid accountId, CancellationToken cancellationToken) =>
-            await context.Movements.AnyAsync(item => item.AccountId == accountId, cancellationToken);
+            await context.Movements
+                .AnyAsync(item => item.AccountId == accountId, cancellationToken);
 
         public void Add(Account account) => context.Accounts.Add(account);
 
