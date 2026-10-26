@@ -14,34 +14,23 @@ namespace Finanzas.Infrastructure.Repositories
             this.context = context;
         }
 
-        public async Task<IReadOnlyList<Movement>> GetAllAsync(CancellationToken cancellationToken) =>
+        public async Task<IReadOnlyList<Movement>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
             await context.Movements
                 .AsNoTracking()
                 .Include(m => m.Category)
                 .Include(m => m.Account)
+                .Include(m => m.Currency)
+                .Where(m => m.UserId == userId)
                 .OrderByDescending(movement => movement.Date)
-                .ThenByDescending(movement => movement.MovementId)
+                .ThenByDescending(movement => movement.CreationDate)
                 .ToListAsync(cancellationToken);
 
-        public async Task<Movement?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        public async Task<Movement?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken) =>
             await context.Movements
                 .Include(m => m.Category)
                 .Include(m => m.Account)
-                .FirstOrDefaultAsync(m => m.MovementId == id, cancellationToken);
-
-        public async Task<bool> CategoryExistsAndMatchesTypeAsync(Guid categoryId, string movementType, CancellationToken cancellationToken)
-        {
-            var category = await context.Categories
-                .AsNoTracking()
-                .SingleOrDefaultAsync(item => item.CategoryId == categoryId && item.Active, cancellationToken);
-
-            return category is not null && category.CategoryType == movementType;
-        }
-
-        public async Task<bool> AccountExistsAndIsActiveAsync(Guid accountId, CancellationToken cancellationToken) =>
-            await context.Accounts
-                .AsNoTracking()
-                .AnyAsync(item => item.AccountId == accountId && item.Active, cancellationToken);
+                .Include(m => m.Currency)
+                .FirstOrDefaultAsync(m => m.MovementId == id && m.UserId == userId, cancellationToken);
 
         public void Add(Movement movement) => context.Movements.Add(movement);
 

@@ -39,9 +39,11 @@ builder.Services.AddScoped<IMovementRepository, MovementRepository>();
 builder.Services.AddScoped<IMovementService, MovementService>();
 
 
-// Autenticación, Tokens y Seguridad (Igual que en GestionComplejo2C)
+// Autenticación, Tokens y Seguridad 
  builder.Services.AddScoped<IAuthService, AuthService>();
- builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 
 builder.Services.AddScoped<ITokenService, JwtTokenService>();

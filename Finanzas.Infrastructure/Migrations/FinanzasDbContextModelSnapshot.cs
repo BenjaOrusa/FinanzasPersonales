@@ -39,23 +39,37 @@ namespace Finanzas.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<decimal>("Balance")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<Guid>("CurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("AccountId")
-                        .HasName("PK_Cuentas");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasIndex("Description")
+                    b.HasKey("AccountId")
+                        .HasName("PK_Accounts");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("UserId", "Description")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Cuentas_Descripcion");
+                        .HasDatabaseName("UQ_Accounts_User_Description");
 
                     b.ToTable("Accounts", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Cuentas_Descripcion", "LEN(LTRIM(RTRIM(Description))) > 0");
+                            t.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
 
-                            t.HasCheckConstraint("CK_Cuentas_TipoCuenta", "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
+                            t.HasCheckConstraint("CK_Accounts_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
                         });
                 });
 
@@ -81,18 +95,71 @@ namespace Finanzas.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("CategoryId")
-                        .HasName("PK_Categorias");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasIndex("Description", "CategoryType")
+                    b.HasKey("CategoryId")
+                        .HasName("PK_Categories");
+
+                    b.HasIndex("UserId", "Description", "CategoryType")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Categorias_Descripcion_TipoCategoria");
+                        .HasDatabaseName("UQ_Categories_User_Description_Type");
 
                     b.ToTable("Categories", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Categorias_Descripcion", "LEN(LTRIM(RTRIM(Description))) > 0");
+                            t.HasCheckConstraint("CK_Categories_CategoryType", "CategoryType IN ('Ingreso', 'Gasto')");
 
-                            t.HasCheckConstraint("CK_Categorias_TipoCategoria", "CategoryType IN ('Ingreso', 'Gasto')");
+                            t.HasCheckConstraint("CK_Categories_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.Currency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Currencies");
+
+                    b.HasIndex("Description")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Currencies_Description");
+
+                    b.ToTable("Currencies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Currencies_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.ExchangeRate", b =>
+                {
+                    b.Property<Guid>("BaseCurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TargetCurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.HasKey("BaseCurrencyId", "TargetCurrencyId", "Date")
+                        .HasName("PK_ExchangeRates");
+
+                    b.HasIndex("TargetCurrencyId");
+
+                    b.ToTable("ExchangeRates", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ExchangeRates_Value", "Value > 0");
                         });
                 });
 
@@ -104,10 +171,6 @@ namespace Finanzas.Infrastructure.Migrations
 
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AdditionalInformation")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
@@ -121,13 +184,16 @@ namespace Finanzas.Infrastructure.Migrations
                         .HasColumnType("datetime2(0)")
                         .HasDefaultValueSql("SYSDATETIME()");
 
+                    b.Property<Guid>("CurrencyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("MovementType")
                         .IsRequired()
@@ -135,28 +201,37 @@ namespace Finanzas.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
 
+                    b.Property<string>("Note")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("MovementId")
-                        .HasName("PK_Movimientos");
+                        .HasName("PK_Movements");
 
                     b.HasIndex("AccountId")
-                        .HasDatabaseName("IX_Movimientos_ID_Cuenta");
+                        .HasDatabaseName("IX_Movements_AccountId");
 
                     b.HasIndex("CategoryId")
-                        .HasDatabaseName("IX_Movimientos_ID_Categoria");
+                        .HasDatabaseName("IX_Movements_CategoryId");
+
+                    b.HasIndex("CurrencyId");
 
                     b.HasIndex("Date")
-                        .HasDatabaseName("IX_Movimientos_Fecha");
+                        .HasDatabaseName("IX_Movements_Date");
 
-                    b.HasIndex("MovementType", "Date")
-                        .HasDatabaseName("IX_Movimientos_TipoMovimiento_Fecha");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Movements_UserId");
 
                     b.ToTable("Movements", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Movimientos_Descripcion", "LEN(LTRIM(RTRIM(Description))) > 0");
+                            t.HasCheckConstraint("CK_Movements_Amount", "Amount > 0");
 
-                            t.HasCheckConstraint("CK_Movimientos_Importe", "Amount > 0");
+                            t.HasCheckConstraint("CK_Movements_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
 
-                            t.HasCheckConstraint("CK_Movimientos_TipoMovimiento", "MovementType IN ('Ingreso', 'Gasto')");
+                            t.HasCheckConstraint("CK_Movements_MovementType", "MovementType IN ('Ingreso', 'Gasto')");
                         });
                 });
 
@@ -187,11 +262,6 @@ namespace Finanzas.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Active")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -207,6 +277,13 @@ namespace Finanzas.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Activo");
 
                     b.Property<string>("Surname")
                         .IsRequired()
@@ -228,7 +305,63 @@ namespace Finanzas.Infrastructure.Migrations
                     b.ToTable("Users", null, t =>
                         {
                             t.HasCheckConstraint("CK_Users_Email", "LEN(LTRIM(RTRIM(Email))) > 0");
+
+                            t.HasCheckConstraint("CK_Users_Status", "Status IN ('Activo', 'Inactivo', 'Bloqueado')");
                         });
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.Account", b =>
+                {
+                    b.HasOne("Finanzas.Domain.Models.Currency", "Currency")
+                        .WithMany("Accounts")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Accounts_Currencies");
+
+                    b.HasOne("Finanzas.Domain.Models.User", "User")
+                        .WithMany("Accounts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Accounts_Users");
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.Category", b =>
+                {
+                    b.HasOne("Finanzas.Domain.Models.User", "User")
+                        .WithMany("Categories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Categories_Users");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.ExchangeRate", b =>
+                {
+                    b.HasOne("Finanzas.Domain.Models.Currency", "BaseCurrency")
+                        .WithMany()
+                        .HasForeignKey("BaseCurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ExchangeRates_BaseCurrency");
+
+                    b.HasOne("Finanzas.Domain.Models.Currency", "TargetCurrency")
+                        .WithMany()
+                        .HasForeignKey("TargetCurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ExchangeRates_TargetCurrency");
+
+                    b.Navigation("BaseCurrency");
+
+                    b.Navigation("TargetCurrency");
                 });
 
             modelBuilder.Entity("Finanzas.Domain.Models.Movement", b =>
@@ -238,18 +371,36 @@ namespace Finanzas.Infrastructure.Migrations
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("FK_Movimientos_Cuentas");
+                        .HasConstraintName("FK_Movements_Accounts");
 
                     b.HasOne("Finanzas.Domain.Models.Category", "Category")
                         .WithMany("Movements")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("FK_Movimientos_Categorias");
+                        .HasConstraintName("FK_Movements_Categories");
+
+                    b.HasOne("Finanzas.Domain.Models.Currency", "Currency")
+                        .WithMany("Movements")
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Movements_Currencies");
+
+                    b.HasOne("Finanzas.Domain.Models.User", "User")
+                        .WithMany("Movements")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Movements_Users");
 
                     b.Navigation("Account");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Finanzas.Domain.Models.User", b =>
@@ -274,9 +425,25 @@ namespace Finanzas.Infrastructure.Migrations
                     b.Navigation("Movements");
                 });
 
+            modelBuilder.Entity("Finanzas.Domain.Models.Currency", b =>
+                {
+                    b.Navigation("Accounts");
+
+                    b.Navigation("Movements");
+                });
+
             modelBuilder.Entity("Finanzas.Domain.Models.TypeOfUser", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Finanzas.Domain.Models.User", b =>
+                {
+                    b.Navigation("Accounts");
+
+                    b.Navigation("Categories");
+
+                    b.Navigation("Movements");
                 });
 #pragma warning restore 612, 618
         }

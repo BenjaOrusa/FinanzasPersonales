@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Finanzas.Application.Interfaces
+namespace Finanzas.Domain.Interfaces
 {
     public interface IUserRepository
     {

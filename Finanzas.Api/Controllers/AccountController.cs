@@ -1,13 +1,15 @@
 using Finanzas.Application.DTOs.Request.Accounts;
 using Finanzas.Application.DTOs.Response.Accounts;
-using Finanzas.Domain.Models;
 using Finanzas.Application.Interfaces;
+using Finanzas.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Finanzas.Api.Controllers;
 
 // Expone las cuentas almacenadas en SQL Server
+[Authorize(Policy = Policies.StandardUsers)]
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController : ControllerBase
@@ -23,7 +25,9 @@ public class AccountController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AccountResponseDTO>>> GetAll(CancellationToken cancellationToken)
     {
-        var accounts = await accountService.GetAllAsync(cancellationToken);
+        var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+
+        var accounts = await accountService.GetAllAsync(userEmail, cancellationToken);
         return Ok(accounts);
     }
 
@@ -32,7 +36,9 @@ public class AccountController : ControllerBase
     {
         try
         {
-            var response = await accountService.CreateAsync(accountRequest, cancellationToken);
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+
+            var response = await accountService.CreateAsync(userEmail, accountRequest, cancellationToken);
             return CreatedAtAction(nameof(GetAll), new { id = response.AccountId }, response);
         }
         catch (ArgumentException ex)
@@ -41,25 +47,30 @@ public class AccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            // Maneja tanto el conflicto por duplicado como el de movimientos asociados si usas excepciones de este tipo
             return Conflict(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
         }
     }
 
-    [HttpDelete("{accountId:Guid}")]
-    public async Task<IActionResult> Delete(Guid accountId, CancellationToken cancellationToken)
+
+    [HttpPatch("{accountId:Guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid accountId, CancellationToken cancellationToken)
     {
         try
         {
-            var deleted = await accountService.DeleteAsync(accountId, cancellationToken);
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var success = await accountService.DeactivateAsync(userEmail, accountId, cancellationToken);
 
-            if (!deleted) return NotFound();
+            if (!success) return NotFound();
 
             return NoContent();
         }
-        catch (InvalidOperationException ex)
+        catch (UnauthorizedAccessException ex)
         {
-            return Conflict(ex.Message);
+            return Unauthorized(ex.Message);
         }
     }
 }

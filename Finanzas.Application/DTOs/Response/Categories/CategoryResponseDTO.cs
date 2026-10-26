@@ -1,6 +1,6 @@
 namespace Finanzas.Application.DTOs.Response.Categories;
 
-/// <summary>Datos de una categoría enviados al frontend.</summary>
+//Datos de una categoría enviados al frontend.
 public class CategoryResponseDTO
 {
     public Guid CategoryId { get; set; }

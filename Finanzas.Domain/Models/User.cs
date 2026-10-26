@@ -11,11 +11,17 @@ namespace Finanzas.Domain.Models
         public string PasswordHash { get; private set; } = string.Empty;
         public string Name { get; private set; } = string.Empty;
         public string Surname { get; private set; } = string.Empty;
-        public bool Active { get; private set; } = true;
+        public string Status { get; private set; } = "Activo"; // 'Activo', 'Inactivo', 'Bloqueado'
 
         // Relación con TypeOfUser (Foreign Key)
         public Guid TypeOfUserId { get; private set; }
         public TypeOfUser? TypeOfUser { get; set; }
+
+
+     
+        public ICollection<Account> Accounts { get; private set; } = new List<Account>();
+        public ICollection<Category> Categories { get; private set; } = new List<Category>();
+        public ICollection<Movement> Movements { get; private set; } = new List<Movement>();
 
         public User()
         {
@@ -32,14 +38,21 @@ namespace Finanzas.Domain.Models
         if (typeOfUserId == Guid.Empty)
             throw new ArgumentException("El tipo de usuario es obligatorio.", nameof(typeOfUserId));
 
-            Id = Guid.NewGuid();
+        Id = Guid.NewGuid();
         Email = email;
         PasswordHash = passwordHash;
         Name = name;
         Surname = surname;
         TypeOfUserId = typeOfUserId;
+        
+     }
+        public void ChangeStatus(string newStatus)
+        {
+            if (string.IsNullOrWhiteSpace(newStatus))
+                throw new ArgumentException("El estado es obligatorio.", nameof(newStatus));
+            Status = newStatus.Trim();
         }
-}
+    }
 
 
 }

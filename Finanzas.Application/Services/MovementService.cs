@@ -1,110 +1,163 @@
 ﻿using Finanzas.Api.Contracts.Movements;
 using Finanzas.Application.DTOs.Request.Movements;
 using Finanzas.Application.Interfaces;
-using Finanzas.Domain.Models;
 using Finanzas.Domain.Interfaces;
+using Finanzas.Domain.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Finanzas.Application.Services
 {
     public class MovementService : IMovementService
     {
         private readonly IMovementRepository movementRepository;
+        private readonly IAccountRepository accountRepository;
+        private readonly ICategoryRepository categoryRepository;
+        private readonly IUserService userService;
 
-        public MovementService(IMovementRepository movementRepository)
+        public MovementService(
+            IMovementRepository movementRepository,
+            IAccountRepository accountRepository,
+            ICategoryRepository categoryRepository,
+            IUserService userService)
         {
             this.movementRepository = movementRepository;
+            this.accountRepository = accountRepository;
+            this.categoryRepository = categoryRepository;
+            this.userService = userService;
         }
 
-        public async Task<IReadOnlyList<MovementResponseDTO>> GetAllAsync(CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<MovementResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken)
         {
-            var movements = await movementRepository.GetAllAsync(cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var movements = await movementRepository.GetAllByUserIdAsync(user.Id, cancellationToken);
 
             return movements.Select(MapToResponseDTO).ToList();
         }
 
-        public async Task<MovementResponseDTO?> GetByIdAsync(Guid movementId, CancellationToken cancellationToken)
+        public async Task<MovementResponseDTO?> GetByIdAsync(string userEmail, Guid movementId, CancellationToken cancellationToken)
         {
-            var movement = await movementRepository.GetByIdAsync(movementId, cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var movement = await movementRepository.GetByIdAndUserIdAsync(movementId, user.Id, cancellationToken);
             return movement is null ? null : MapToResponseDTO(movement);
         }
 
-        public async Task<(MovementResponseDTO? Response, string? Error)> CreateAsync(MovementRequestDTO request, CancellationToken cancellationToken)
+        public async Task<MovementResponseDTO> CreateAsync(string userEmail, MovementRequestDTO request, CancellationToken cancellationToken)
         {
-            var error = await ValidateAsync(request, cancellationToken);
-            if (error is not null) return (null, error);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
 
-            var movement = new Movement
+            // Validar existencia y pertenencia de la cuenta activa al usuario
+            var account = await accountRepository.GetByIdAndUserIdAsync(request.AccountId, user.Id, cancellationToken);
+            if (account is null || !account.Active)
             {
-                Description = request.Description.Trim(),
-                Amount = request.Amount,
-                Date = request.Date,
-                MovementType = request.MovementType,
-                CategoryId = request.CategoryId,
-                AccountId = request.AccountId,
-                AdditionalInformation = NormalizarNota(request.AdditionalInformation)
-            };
+                throw new InvalidOperationException("La cuenta no existe, está inactiva o no pertenece al usuario.");
+            }
+
+            // Validar existencia, pertenencia y compatibilidad de la categoría activa con el tipo de movimiento
+            var category = await categoryRepository.GetByIdAndUserIdAsync(request.CategoryId, user.Id, cancellationToken);
+            if (category is null || !category.Active || category.CategoryType != request.MovementType)
+            {
+                throw new InvalidOperationException("La categoría no existe, está inactiva o su tipo no coincide con el movimiento.");
+            }
+
+            // Instanciar el movimiento usando su constructor blindado.
+            // La moneda se hereda automáticamente de la cuenta asociada.
+            var movement = new Movement(
+                request.Description,
+                request.Amount,
+                request.Date,
+                request.MovementType,
+                user.Id,
+                account.AccountId,
+                category.CategoryId,
+                account.CurrencyId,
+                request.Note);
+
+            // Actualización del saldo de la cuenta (CU11)
+            decimal balanceImpact = movement.MovementType == "Ingreso" ? movement.Amount : -movement.Amount;
+            account.UpdateBalance(balanceImpact);
 
             movementRepository.Add(movement);
             await movementRepository.SaveChangesAsync(cancellationToken);
 
-            // Recargamos o consultamos para asegurar relaciones mapeadas (Categoría y Cuenta)
-            var createdMovement = await movementRepository.GetByIdAsync(movement.MovementId, cancellationToken);
-            return (MapToResponseDTO(createdMovement!), null);
+            var createdMovement = await movementRepository.GetByIdAndUserIdAsync(movement.MovementId, user.Id, cancellationToken);
+            return MapToResponseDTO(createdMovement!);
         }
 
-        public async Task<(MovementResponseDTO? Response, string? Error)> UpdateAsync(Guid movementId, MovementRequestDTO request, CancellationToken cancellationToken)
+        public async Task<MovementResponseDTO?> UpdateAsync(string userEmail, Guid movementId, MovementRequestDTO request, CancellationToken cancellationToken)
         {
-            var movement = await movementRepository.GetByIdAsync(movementId, cancellationToken);
-            if (movement is null) return (null, "NotFound");
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var movement = await movementRepository.GetByIdAndUserIdAsync(movementId, user.Id, cancellationToken);
+            if (movement is null) return null;
 
-            var error = await ValidateAsync(request, cancellationToken);
-            if (error is not null) return (null, error);
+            // Obtener cuenta anterior para revertir impacto en saldo si cambió la cuenta o el importe
+            var oldAccount = await accountRepository.GetByIdAndUserIdAsync(movement.AccountId, user.Id, cancellationToken);
+            var newAccount = await accountRepository.GetByIdAndUserIdAsync(request.AccountId, user.Id, cancellationToken);
 
-            movement.Description = request.Description.Trim();
-            movement.Amount = request.Amount;
-            movement.Date = request.Date;
-            movement.MovementType = request.MovementType;
-            movement.CategoryId = request.CategoryId;
-            movement.AccountId = request.AccountId;
-            movement.AdditionalInformation = NormalizarNota(request.AdditionalInformation);
+            if (newAccount is null || !newAccount.Active)
+            {
+                throw new InvalidOperationException("La cuenta especificada no existe o está inactiva.");
+            }
 
+            var category = await categoryRepository.GetByIdAndUserIdAsync(request.CategoryId, user.Id, cancellationToken);
+            if (category is null || !category.Active || category.CategoryType != request.MovementType)
+            {
+                throw new InvalidOperationException("La categoría especificada no existe, está inactiva o no coincide con el tipo de movimiento.");
+            }
+
+            // 1. Revertir saldo anterior
+            if (oldAccount != null)
+            {
+                decimal oldBalanceImpact = movement.MovementType == "Ingreso" ? -movement.Amount : movement.Amount;
+                oldAccount.UpdateBalance(oldBalanceImpact);
+            }
+
+            // 2. Reemplazar por la entidad modificada conservando auditorías
+            movementRepository.Remove(movement);
+
+            var updatedMovement = new Movement(
+                request.Description,
+                request.Amount,
+                request.Date,
+                request.MovementType,
+                user.Id,
+                newAccount.AccountId,
+                category.CategoryId,
+                newAccount.CurrencyId,
+                request.Note);
+
+            // 3. Aplicar nuevo saldo
+            decimal newBalanceImpact = updatedMovement.MovementType == "Ingreso" ? updatedMovement.Amount : -updatedMovement.Amount;
+            newAccount.UpdateBalance(newBalanceImpact);
+
+            movementRepository.Add(updatedMovement);
             await movementRepository.SaveChangesAsync(cancellationToken);
 
-            var updatedMovement = await movementRepository.GetByIdAsync(movementId, cancellationToken);
-            return (MapToResponseDTO(updatedMovement!), null);
+            var refreshed = await movementRepository.GetByIdAndUserIdAsync(updatedMovement.MovementId, user.Id, cancellationToken);
+            return MapToResponseDTO(refreshed!);
         }
 
-        public async Task<bool> DeleteAsync(Guid movementId, CancellationToken cancellationToken)
+        public async Task<bool> DeleteAsync(string userEmail, Guid movementId, CancellationToken cancellationToken)
         {
-            var movement = await movementRepository.GetByIdAsync(movementId, cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var movement = await movementRepository.GetByIdAndUserIdAsync(movementId, user.Id, cancellationToken);
             if (movement is null) return false;
+
+            // Revertir el saldo de la cuenta al eliminar el movimiento (CU13)
+            var account = await accountRepository.GetByIdAndUserIdAsync(movement.AccountId, user.Id, cancellationToken);
+            if (account != null)
+            {
+                decimal balanceImpact = movement.MovementType == "Ingreso" ? -movement.Amount : movement.Amount;
+                account.UpdateBalance(balanceImpact);
+            }
 
             movementRepository.Remove(movement);
             await movementRepository.SaveChangesAsync(cancellationToken);
 
             return true;
-        }
-
-        private async Task<string?> ValidateAsync(MovementRequestDTO request, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Trim().Length > 200)
-                return "La descripción es obligatoria y admite hasta 200 caracteres.";
-
-            if (request.Amount <= 0 || request.MovementType is not ("Ingreso" or "Gasto"))
-                return "El importe o el tipo de movimiento no son válidos.";
-
-            if (request.AdditionalInformation?.Length > 500)
-                return "La nota admite hasta 500 caracteres.";
-
-            var validCategory = await movementRepository.CategoryExistsAndMatchesTypeAsync(request.CategoryId, request.MovementType, cancellationToken);
-            if (!validCategory)
-                return "La categoría no existe, está inactiva o no corresponde al tipo de movimiento.";
-
-            var validAccount = await movementRepository.AccountExistsAndIsActiveAsync(request.AccountId, cancellationToken);
-            if (!validAccount)
-                return "La cuenta no existe o está inactiva.";
-
-            return null;
         }
 
         private static MovementResponseDTO MapToResponseDTO(Movement movement) => new()
@@ -115,13 +168,12 @@ namespace Finanzas.Application.Services
             Date = movement.Date,
             MovementType = movement.MovementType,
             CategoryId = movement.CategoryId,
-            Category = movement.Category?.Description ?? string.Empty,
+            CategoryDescription = movement.Category?.Description ?? string.Empty,
             AccountId = movement.AccountId,
-            Account = movement.Account?.Description ?? string.Empty,
-            AdditionalInformation = movement.AdditionalInformation
+            AccountDescription = movement.Account?.Description ?? string.Empty,
+            CurrencyId = movement.CurrencyId,
+            Note = movement.Note,
+            CreationDate = movement.CreationDate
         };
-
-        private static string? NormalizarNota(string? nota) =>
-            string.IsNullOrWhiteSpace(nota) ? null : nota.Trim();
     }
 }

@@ -9,15 +9,18 @@ namespace Finanzas.Application.Services
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository categoryRepository;
+        private readonly IUserService userService;
 
-        public CategoryService(ICategoryRepository categoryRepository)
+        public CategoryService(ICategoryRepository categoryRepository, IUserService userService)
         {
             this.categoryRepository = categoryRepository;
+            this.userService = userService;
         }
 
-        public async Task<IReadOnlyList<CategoryResponseDTO>> GetAllAsync(CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<CategoryResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken)
         {
-            var categories = await categoryRepository.GetAllAsync(cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var categories = await categoryRepository.GetAllByUserIdAsync(user.Id, cancellationToken);
 
             return categories.Select(item => new CategoryResponseDTO
             {
@@ -28,8 +31,10 @@ namespace Finanzas.Application.Services
             }).ToList();
         }
 
-        public async Task<CategoryResponseDTO> CreateAsync(CategoryRequestDTO request, CancellationToken cancellationToken)
+        public async Task<CategoryResponseDTO> CreateAsync(string userEmail, CategoryRequestDTO request, CancellationToken cancellationToken)
         {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+
             var description = request.Description.Trim();
 
             if (description.Length is 0 or > 100 || request.CategoryType is not ("Ingreso" or "Gasto"))
@@ -37,17 +42,13 @@ namespace Finanzas.Application.Services
                 throw new ArgumentException("La descripción y el tipo de categoría no son válidos.");
             }
 
-            if (await categoryRepository.ExistsByDescriptionAndTypeAsync(description, request.CategoryType, cancellationToken))
+            if (await categoryRepository.ExistsByDescriptionAndTypeAndUserAsync(description, request.CategoryType, user.Id, cancellationToken))
             {
-                throw new InvalidOperationException("Ya existe una categoría con esa descripción y tipo.");
+                throw new InvalidOperationException("Ya existe una categoría con esa descripción y tipo para este usuario.");
             }
 
-            var category = new Category
-            {
-                Description = description,
-                CategoryType = request.CategoryType,
-                Active = true
-            };
+            // Uso del constructor blindado de la entidad Category
+            var category = new Category(description, request.CategoryType, user.Id);
 
             categoryRepository.Add(category);
             await categoryRepository.SaveChangesAsync(cancellationToken);
@@ -61,18 +62,16 @@ namespace Finanzas.Application.Services
             };
         }
 
-        public async Task<bool> DeleteAsync(Guid categoryId, CancellationToken cancellationToken)
+        public async Task<bool> DeactivateAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken)
         {
-            var category = await categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var category = await categoryRepository.GetByIdAndUserIdAsync(categoryId, user.Id, cancellationToken);
 
             if (category is null) return false;
 
-            if (await categoryRepository.HasMovementsAsync(categoryId, cancellationToken))
-            {
-                throw new InvalidOperationException("La categoría tiene movimientos asociados.");
-            }
+            // Baja lógica exigida por el CU10 (conservando el historial de movimientos)
+            category.Deactivate();
 
-            categoryRepository.Remove(category);
             await categoryRepository.SaveChangesAsync(cancellationToken);
 
             return true;

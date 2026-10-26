@@ -4,9 +4,9 @@ namespace Finanzas.Domain.Interfaces
 {
     public interface ICategoryRepository
     {
-        Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken cancellationToken);
-        Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-        Task<bool> ExistsByDescriptionAndTypeAsync(string description, string categoryType, CancellationToken cancellationToken);
+        Task<IReadOnlyList<Category>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken);
+        Task<Category?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken);
+        Task<bool> ExistsByDescriptionAndTypeAndUserAsync(string description, string categoryType, Guid userId, CancellationToken cancellationToken);
         Task<bool> HasMovementsAsync(Guid categoryId, CancellationToken cancellationToken);
         void Add(Category category);
         void Remove(Category category);

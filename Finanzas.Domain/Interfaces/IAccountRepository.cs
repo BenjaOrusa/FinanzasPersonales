@@ -7,9 +7,9 @@ namespace Finanzas.Domain.Interfaces
 {
     public interface IAccountRepository
     {
-        Task<IReadOnlyList<Account>> GetAllAsync(CancellationToken cancellationToken);
-        Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-        Task<bool> ExistsByDescriptionAsync(string description, CancellationToken cancellationToken);
+        Task<IReadOnlyList<Account>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken);
+        Task<Account?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken);
+        Task<bool> ExistsByDescriptionAndUserAsync(string description, Guid userId, CancellationToken cancellationToken);
         Task<bool> HasMovementsAsync(Guid accountId, CancellationToken cancellationToken);
         void Add(Account account);
         void Remove(Account account);

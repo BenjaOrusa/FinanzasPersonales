@@ -14,17 +14,24 @@ namespace Finanzas.Infrastructure.Repositories
             this.context = context;
         }
 
-        public async Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken cancellationToken) =>
-            await context.Categories.AsNoTracking().OrderBy(item => item.Description).ToListAsync(cancellationToken);
+        public async Task<IReadOnlyList<Category>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
+            await context.Categories
+                .AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .OrderBy(item => item.Description)
+                .ToListAsync(cancellationToken);
 
-        public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-            await context.Categories.FindAsync([id], cancellationToken);
+        public async Task<Category?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken) =>
+            await context.Categories
+                .FirstOrDefaultAsync(item => item.CategoryId == id && item.UserId == userId, cancellationToken);
 
-        public async Task<bool> ExistsByDescriptionAndTypeAsync(string description, string categoryType, CancellationToken cancellationToken) =>
-            await context.Categories.AnyAsync(item => item.Description == description && item.CategoryType == categoryType, cancellationToken);
+        public async Task<bool> ExistsByDescriptionAndTypeAndUserAsync(string description, string categoryType, Guid userId, CancellationToken cancellationToken) =>
+            await context.Categories
+                .AnyAsync(item => item.UserId == userId && item.Description == description && item.CategoryType == categoryType, cancellationToken);
 
         public async Task<bool> HasMovementsAsync(Guid categoryId, CancellationToken cancellationToken) =>
-            await context.Movements.AnyAsync(item => item.CategoryId == categoryId, cancellationToken);
+            await context.Movements
+                .AnyAsync(item => item.CategoryId == categoryId, cancellationToken);
 
         public void Add(Category category) => context.Categories.Add(category);
 

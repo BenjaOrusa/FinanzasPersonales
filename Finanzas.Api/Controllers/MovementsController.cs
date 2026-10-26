@@ -1,12 +1,14 @@
 using Finanzas.Api.Contracts.Movements;
 using Finanzas.Application.DTOs.Request.Movements;
 using Finanzas.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Finanzas.Api.Controllers
 {
- 
+
     // Expone operaciones HTTP relacionadas con los movimientos financieros
+    [Authorize(Policy = Policies.StandardUsers)]
     [ApiController]
     [Route("api/[controller]")]
     public class MovementController : ControllerBase
@@ -18,58 +20,100 @@ namespace Finanzas.Api.Controllers
             this.movementService = movementService;
         }
 
-       
-        // Obtiene todos los movimientos ordenados desde el más reciente
+
         [HttpGet]
-        [ProducesResponseType<IReadOnlyList<MovementResponseDTO>>(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IReadOnlyList<MovementResponseDTO>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
-            var movements = await movementService.GetAllAsync(cancellationToken);
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var movements = await movementService.GetAllAsync(userEmail, cancellationToken);
             return Ok(movements);
         }
 
-        //Crea un movimiento y devuelve la representación recién guardada
-        [HttpPost]
-        public async Task<ActionResult<MovementResponseDTO>> Create(
-            [FromBody] MovementRequestDTO movementRequest, CancellationToken cancellationToken)
-        {
-            var (response, error) = await movementService.CreateAsync(movementRequest, cancellationToken);
-
-            if (error is not null) return BadRequest(error);
-
-            return CreatedAtAction(nameof(GetById), new { MovementId = response!.MovementId }, response);
-        }
-
-        // Obtiene un movimiento por su identificador
         [HttpGet("{movementId:Guid}")]
+        [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MovementResponseDTO>> GetById(Guid movementId, CancellationToken cancellationToken)
         {
-            var response = await movementService.GetByIdAsync(movementId, cancellationToken);
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var response = await movementService.GetByIdAsync(userEmail, movementId, cancellationToken);
             return response is null ? NotFound() : Ok(response);
         }
 
-        //Actualiza todos los datos editables de un movimiento
+        [HttpPost]
+        [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<MovementResponseDTO>> Create(
+            [FromBody] MovementRequestDTO movementRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await movementService.CreateAsync(userEmail, movementRequest, cancellationToken);
+                return CreatedAtAction(nameof(GetById), new { movementId = response.MovementId }, response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
+
         [HttpPut("{movementId:Guid}")]
+        [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MovementResponseDTO>> Update(
             Guid movementId, [FromBody] MovementRequestDTO movementRequest, CancellationToken cancellationToken)
         {
-            var (response, error) = await movementService.UpdateAsync(movementId, movementRequest, cancellationToken);
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await movementService.UpdateAsync(userEmail, movementId, movementRequest, cancellationToken);
 
-            if (error == "NotFound") return NotFound();
-            if (error is not null) return BadRequest(error);
+                if (response is null) return NotFound();
 
-            return Ok(response);
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
         }
 
-        //Elimina definitivamente un movimiento.
         [HttpDelete("{movementId:Guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(Guid movementId, CancellationToken cancellationToken)
         {
-            var deleted = await movementService.DeleteAsync(movementId, cancellationToken);
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var deleted = await movementService.DeleteAsync(userEmail, movementId, cancellationToken);
 
-            if (!deleted) return NotFound();
+                if (!deleted) return NotFound();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
         }
     }
 }
