@@ -20,6 +20,19 @@ namespace Finanzas.Infrastructure.Repositories
                 .Include(u => u.TypeOfUser) // Traemos el rol asociado
                 .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
+        public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            await context.Users
+                .Include(u => u.TypeOfUser)
+                .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+
+        public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            await context.Users
+                .AsNoTracking()
+                .Include(u => u.TypeOfUser)
+                .OrderBy(u => u.Surname)
+                .ThenBy(u => u.Name)
+                .ToListAsync(cancellationToken);
+
         public async Task<bool> ExistsEmailAsync(string email, CancellationToken cancellationToken = default) =>
             await context.Users.AnyAsync(u => u.Email == email, cancellationToken);
 

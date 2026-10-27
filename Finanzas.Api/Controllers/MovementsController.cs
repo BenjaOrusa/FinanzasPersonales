@@ -40,6 +40,8 @@ namespace Finanzas.Api.Controllers
             return response is null ? NotFound() : Ok(response);
         }
 
+
+        //CU11 — Registrar un movimiento
         [HttpPost]
         [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -66,6 +68,7 @@ namespace Finanzas.Api.Controllers
             }
         }
 
+        //CU12 — Editar un movimiento
         [HttpPut("{movementId:Guid}")]
         [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -96,6 +99,7 @@ namespace Finanzas.Api.Controllers
             }
         }
 
+        //CU13 — Eliminar un movimiento
         [HttpDelete("{movementId:Guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -114,6 +118,32 @@ namespace Finanzas.Api.Controllers
             {
                 return Unauthorized(ex.Message);
             }
+        }
+
+        // CU14: Consultar movimientos con filtros opcionales (tipo, fechas, cuenta, categoría)
+        [HttpGet]
+        [ProducesResponseType(typeof(IReadOnlyList<MovementResponseDTO>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAll(
+            [FromQuery] string? movementType,
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate,
+            [FromQuery] Guid? accountId,
+            [FromQuery] Guid? categoryId,
+            CancellationToken cancellationToken)
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+
+            var filter = new MovementFilterDTO
+            {
+                MovementType = movementType,
+                StartDate = startDate,
+                EndDate = endDate,
+                AccountId = accountId,
+                CategoryId = categoryId
+            };
+
+            var movements = await movementService.GetFilteredAsync(userEmail, filter, cancellationToken);
+            return Ok(movements);
         }
     }
 }

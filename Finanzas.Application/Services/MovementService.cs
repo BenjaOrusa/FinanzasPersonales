@@ -30,6 +30,25 @@ namespace Finanzas.Application.Services
             this.userService = userService;
         }
 
+
+
+        public async Task<IReadOnlyList<MovementResponseDTO>> GetFilteredAsync(string userEmail, MovementFilterDTO filter, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+
+            var movements = await movementRepository.GetFilteredByUserIdAsync(
+                user.Id,
+                filter.MovementType,
+                filter.StartDate,
+                filter.EndDate,
+                filter.AccountId,
+                filter.CategoryId,
+                cancellationToken);
+
+            return movements.Select(MapToResponseDTO).ToList();
+        }
+
+
         public async Task<IReadOnlyList<MovementResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);

@@ -28,6 +28,8 @@ namespace Finanzas.Api.Controllers
             return Ok(categories);
         }
 
+
+        //CU08 — Crear una categoría
         [HttpPost]
         public async Task<ActionResult<CategoryResponseDTO>> Create([FromBody] CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
         {
@@ -51,6 +53,36 @@ namespace Finanzas.Api.Controllers
             }
         }
 
+        // CU09: Editar una categoría propia
+        [HttpPut("{categoryId:Guid}")]
+        public async Task<ActionResult<CategoryResponseDTO>> Update(Guid categoryId, [FromBody] CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await categoryService.UpdateAsync(userEmail, categoryId, categoryRequest, cancellationToken);
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
+
+
+        //CU10 — Desactivar una categoría
         [HttpPatch("{categoryId:Guid}/deactivate")]
         public async Task<IActionResult> Deactivate(Guid categoryId, CancellationToken cancellationToken)
         {

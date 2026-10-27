@@ -9,5 +9,7 @@ public class AccountResponseDTO
     public bool Active { get; set; }
 
     public decimal Balance { get; set; }
+
+    public Guid CurrencyId { get; set; }
 }
 
