@@ -62,6 +62,43 @@ namespace Finanzas.Application.Services
             };
         }
 
+        public async Task<CategoryResponseDTO> UpdateAsync(string userEmail, Guid categoryId, CategoryRequestDTO request, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var category = await categoryRepository.GetByIdAndUserIdAsync(categoryId, user.Id, cancellationToken);
+
+            if (category is null)
+                throw new KeyNotFoundException("La categoría no existe o no pertenece al usuario.");
+
+            var description = request.Description.Trim();
+
+            if (description.Length is 0 or > 100 || request.CategoryType is not ("Ingreso" or "Gasto"))
+            {
+                throw new ArgumentException("La descripción y el tipo de categoría no son válidos.");
+            }
+
+            // Validar unicidad excluyendo la categoría actual
+            if (await categoryRepository.ExistsByDescriptionAndTypeAndUserExcludingIdAsync(description, request.CategoryType, user.Id, categoryId, cancellationToken))
+            {
+                throw new InvalidOperationException("Ya existe otra categoría con esa descripción y tipo para este usuario.");
+            }
+
+            // CU09 (Alternativa 4.b): Verificar compatibilidad del nuevo tipo con movimientos existentes
+            if (category.CategoryType != request.CategoryType)
+            {
+                bool hasMovements = await categoryRepository.HasMovementsAsync(categoryId, cancellationToken);
+                if (hasMovements)
+                {
+                    throw new InvalidOperationException("El cambio de tipo dejaría movimientos existentes con una categoría incompatible.");
+                }
+            }
+
+            category.Update(description, request.CategoryType);
+            await categoryRepository.SaveChangesAsync(cancellationToken);
+
+            return MapToResponseDTO(category);
+        }
+
         public async Task<bool> DeactivateAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
@@ -76,5 +113,12 @@ namespace Finanzas.Application.Services
 
             return true;
         }
+        private static CategoryResponseDTO MapToResponseDTO(Category category) => new()
+        {
+            CategoryId = category.CategoryId,
+            Description = category.Description,
+            CategoryType = category.CategoryType,
+            Active = category.Active
+        };
     }
 }

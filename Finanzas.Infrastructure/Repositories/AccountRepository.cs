@@ -33,6 +33,11 @@ namespace Finanzas.Infrastructure.Repositories
             await context.Accounts
                 .AnyAsync(item => item.UserId == userId && item.Description == description, cancellationToken);
 
+
+        public async Task<bool> ExistsByDescriptionAndUserExcludingIdAsync(string description, Guid userId, Guid accountId, CancellationToken cancellationToken) =>
+            await context.Accounts
+                .AnyAsync(item => item.UserId == userId && item.Description == description && item.AccountId != accountId, cancellationToken);
+
         public async Task<bool> HasMovementsAsync(Guid accountId, CancellationToken cancellationToken) =>
             await context.Movements
                 .AnyAsync(item => item.AccountId == accountId, cancellationToken);

@@ -31,5 +31,13 @@ namespace Finanzas.Domain.Models
             Date = date.Date; // Se guarda solo la fecha sin horas
             Value = value;
         }
+
+        public void UpdateValue(decimal newValue)
+        {
+            if (newValue <= 0)
+                throw new ArgumentException("El valor de la cotización debe ser mayor a cero.", nameof(newValue));
+
+            Value = newValue;
+        }
     }
 }

@@ -48,6 +48,19 @@ public class Category
         UserId = userId;
     }
 
+
+    public void Update(string description, string categoryType)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("La descripción de la categoría es obligatoria.", nameof(description));
+
+        if (string.IsNullOrWhiteSpace(categoryType))
+            throw new ArgumentException("El tipo de categoría es obligatorio.", nameof(categoryType));
+
+        Description = description.Trim();
+        CategoryType = categoryType.Trim();
+    }
+
     public void Deactivate() => Active = false;
     public void Activate() => Active = true;
 }

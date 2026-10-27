@@ -74,6 +74,22 @@ public class Account
         Description = newDescription.Trim();
     }
 
+    public void Update(string description, string accountType, Guid currencyId)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("La descripción de la cuenta es obligatoria.", nameof(description));
+
+        if (string.IsNullOrWhiteSpace(accountType))
+            throw new ArgumentException("El tipo de cuenta es obligatorio.", nameof(accountType));
+
+        if (currencyId == Guid.Empty)
+            throw new ArgumentException("La cuenta debe tener una moneda asociada.", nameof(currencyId));
+
+        Description = description.Trim();
+        AccountType = accountType.Trim();
+        CurrencyId = currencyId;
+    }
+
     public void UpdateBalance(decimal amountChange)
     {
          Balance += amountChange;

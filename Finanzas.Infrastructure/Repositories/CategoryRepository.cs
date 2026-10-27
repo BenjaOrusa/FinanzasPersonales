@@ -28,6 +28,9 @@ namespace Finanzas.Infrastructure.Repositories
         public async Task<bool> ExistsByDescriptionAndTypeAndUserAsync(string description, string categoryType, Guid userId, CancellationToken cancellationToken) =>
             await context.Categories
                 .AnyAsync(item => item.UserId == userId && item.Description == description && item.CategoryType == categoryType, cancellationToken);
+        public async Task<bool> ExistsByDescriptionAndTypeAndUserExcludingIdAsync(string description, string categoryType, Guid userId, Guid categoryId, CancellationToken cancellationToken) =>
+            await context.Categories
+                .AnyAsync(item => item.UserId == userId && item.Description == description && item.CategoryType == categoryType && item.CategoryId != categoryId, cancellationToken);
 
         public async Task<bool> HasMovementsAsync(Guid categoryId, CancellationToken cancellationToken) =>
             await context.Movements

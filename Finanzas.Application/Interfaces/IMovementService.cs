@@ -10,5 +10,7 @@ namespace Finanzas.Application.Interfaces
         Task<MovementResponseDTO> CreateAsync(string userEmail, MovementRequestDTO request, CancellationToken cancellationToken);
         Task<MovementResponseDTO?> UpdateAsync(string userEmail, Guid movementId, MovementRequestDTO request, CancellationToken cancellationToken);
         Task<bool> DeleteAsync(string userEmail, Guid movementId, CancellationToken cancellationToken);
+
+        Task<IReadOnlyList<MovementResponseDTO>> GetFilteredAsync(string userEmail, MovementFilterDTO filter, CancellationToken cancellationToken);
     }
 }

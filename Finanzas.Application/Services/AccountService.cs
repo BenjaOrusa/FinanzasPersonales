@@ -39,6 +39,14 @@ namespace Finanzas.Application.Services
             }).ToList();
         }
 
+        public async Task<AccountResponseDTO?> GetByIdAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
+
+            return account is null ? null : MapToResponseDTO(account);
+        }
+
         public async Task<AccountResponseDTO> CreateAsync(string userEmail, AccountRequestDTO request, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
@@ -90,6 +98,60 @@ namespace Finanzas.Application.Services
 
             return true;
         }
+
+        public async Task<AccountResponseDTO> UpdateAsync(string userEmail, Guid accountId, AccountRequestDTO request, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
+
+            if (account is null)
+                throw new KeyNotFoundException("La cuenta no existe o no pertenece al usuario.");
+
+            var description = request.Description.Trim();
+
+            if (description.Length is 0 or > 100 || request.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
+            {
+                throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
+            }
+
+            if (request.CurrencyId == Guid.Empty)
+            {
+                throw new ArgumentException("Debe especificar una moneda válida para la cuenta.");
+            }
+
+            // Validar unicidad de descripción excluyendo la cuenta actual
+            if (await accountRepository.ExistsByDescriptionAndUserExcludingIdAsync(description, user.Id, accountId, cancellationToken))
+            {
+                throw new InvalidOperationException("Ya existe otra cuenta con esa descripción para este usuario.");
+            }
+
+            // CU05: Validar coherencia con movimientos existentes si se intenta cambiar la moneda
+            if (account.CurrencyId != request.CurrencyId)
+            {
+                bool hasMovements = await accountRepository.HasMovementsAsync(accountId, cancellationToken);
+                if (hasMovements)
+                {
+                    throw new InvalidOperationException("No se puede modificar la moneda de una cuenta que ya posee movimientos históricos asociados.");
+                }
+            }
+
+            // Actualizar mediante el método de dominio controlado
+            account.Update(description, request.AccountType, request.CurrencyId);
+
+            await accountRepository.SaveChangesAsync(cancellationToken);
+
+            return MapToResponseDTO(account);
+        }
+
+        private static AccountResponseDTO MapToResponseDTO(Account account) => new()
+        {
+            AccountId = account.AccountId,
+            Description = account.Description,
+            AccountType = account.AccountType,
+            Active = account.Active,
+            Balance = account.Balance,
+            CurrencyId = account.CurrencyId
+        };
     }
 
 }
