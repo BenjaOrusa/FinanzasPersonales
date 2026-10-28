@@ -20,7 +20,14 @@ var connectionString = builder.Configuration.GetConnectionString("FinanzasPerson
 
 // AddDbContext registra un contexto por petición HTTP (vida útil Scoped).
 builder.Services.AddDbContext<FinanzasDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlServerOptionsAction =>
+    {
+        sqlServerOptionsAction.EnableRetryOnFailure(
+            maxRetryCount: 5,                        // Número máximo de reintentos
+            maxRetryDelay: TimeSpan.FromSeconds(30), // Tiempo máximo de espera entre reintentos
+            errorNumbersToAdd: null                  // Errores adicionales opcionales
+        );
+    }));
 
 
 // ==========================================
