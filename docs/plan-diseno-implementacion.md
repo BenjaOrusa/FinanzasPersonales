@@ -20,6 +20,19 @@ Un paso se considera terminado solamente cuando:
 
 No se comienza una fase nueva mientras quede sin verificar el paso actual.
 
+## Cambio de secuencia aprobado
+
+Después de aprobar y probar el frontend, se decidió diseñar y crear la base de datos antes
+de implementar el backend funcional. El recorrido vigente es:
+
+```text
+Frontend aprobado -> modelo conceptual -> diseño relacional -> SQL Server
+-> Entity Framework Core -> API REST -> integración con React
+```
+
+Las fases siguientes conservan su contenido como referencia, pero se ejecutarán según este
+orden acordado cuando exista una dependencia entre ellas.
+
 ---
 
 ## Fase 0 — Preparación y organización

@@ -31,6 +31,7 @@ practicar CRUD y comunicación HTTP.
 ```text
 FinanzasPersonales/
 |-- Finanzas.Api/          Proyecto ASP.NET Core Web API
+|-- Finanzas.Web/          Proyecto React, TypeScript y Vite
 |-- docs/                  Plan, convenciones y registro de aprendizaje
 |-- FinanzasPersonales.slnx
 `-- README.md
@@ -55,6 +56,7 @@ Direcciones locales configuradas:
 ## Documentación
 
 - [Índice de documentación](docs/README.md)
+- [Visión y potencial del producto](docs/vision-y-potencial.md)
 - [Plan secuencial de diseño e implementación](docs/plan-diseno-implementacion.md)
 - [Convenciones de código](docs/convenciones.md)
 - [Referencia HTTP](docs/http.md)

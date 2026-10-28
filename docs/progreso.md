@@ -21,24 +21,33 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 
 - [x] Proyecto backend inicial creado.
 - [x] Endpoint de ejemplo `/weatherforecast` probado.
-- [x] Modelo inicial `Movimiento` creado.
+- [x] Modelo inicial `Movimiento` evaluado y retirado al quedar superado por el diseño funcional.
 - [x] Plan secuencial de diseño e implementación documentado.
 - [x] Repositorio Git local inicializado.
 - [x] Archivo `.gitignore` creado y revisado.
 - [x] Rama principal `main` definida.
-- [ ] Commit inicial creado.
-- [ ] Repositorio remoto creado en GitHub.
-- [ ] Remoto `origin` configurado.
-- [ ] Rama `main` publicada y verificada en GitHub.
-- [ ] Ciclo de trabajo con una rama practicado.
+- [x] Commit inicial creado.
+- [x] Repositorio remoto creado en GitHub.
+- [x] Remoto `origin` configurado.
+- [x] Rama `main` publicada y verificada en GitHub.
+- [x] Ramas `desarrollo` y `benjamin.orusa` creadas y publicadas.
 - [ ] Historias de usuario y alcance de la primera versión.
-- [ ] Mapa de páginas y navegación.
-- [ ] Wireframes de baja fidelidad.
+- [x] Mapa de páginas y navegación.
+- [x] Wireframes de baja fidelidad.
+- [x] Sistema visual inicial aprobado.
 - [ ] `GET /api/movimientos` con datos en memoria.
-- [ ] Consulta de un movimiento por identificador.
-- [ ] Alta, modificación y eliminación de movimientos.
+- [x] `GET /api/movimientos` conectado a SQL Server mediante Entity Framework Core.
+- [x] Primera lectura real desde React mediante `fetch`, con carga, error y CORS.
+- [x] Consulta de un movimiento por identificador.
+- [x] Alta, modificación y eliminación de movimientos persistidos en SQL Server.
+- [x] Categorías y cuentas obtenidas desde la API, sin arreglos hardcodeados.
+- [x] Alta y eliminación persistente de categorías y cuentas.
 - [ ] Persistencia con SQL Server y Entity Framework Core.
-- [ ] Frontend React y TypeScript.
+- [x] Modelo relacional inicial de categorías, cuentas y movimientos aprobado y documentado.
+- [x] Frontend React, TypeScript y Vite creado como proyecto separado.
+- [x] Navegación entre Resumen, Movimientos, Categorías y Cuentas.
+- [x] CRUD visual de movimientos con datos temporales en memoria.
+- [x] Administración visual básica de categorías y cuentas en memoria.
 - [ ] Autenticación y autorización.
 
 ## Decisiones vigentes
@@ -47,12 +56,11 @@ Los materiales fuente se encuentran en `C:\TUP\Programacion`.
 - La lógica financiera importante estará en el backend.
 - Los datos se almacenarán inicialmente en memoria.
 - Los importes se representarán con `decimal` en C#.
-- Inicialmente, `Tipo` será texto y el importe se guardará como valor positivo.
+- El modelo de datos definitivo se diseñará a partir de las pantallas aprobadas.
+- Los importes se guardarán como valores positivos y el tipo indicará ingreso o gasto.
 - La autenticación se incorporará después de aprender CRUD y comunicación HTTP.
 
 ## Próximo paso
 
-Continuar la Fase 0 comenzando por verificar la instalación y configuración de Git.
-Después se inicializará el repositorio local, se revisará el `.gitignore` y se creará el
-primer commit. La creación y publicación del repositorio de GitHub se realizará como un
-paso posterior y verificable, antes de comenzar el diseño funcional.
+Diseñar el modelo conceptual y relacional de movimientos, categorías y cuentas. Después se
+definirán el esquema SQL y sus restricciones antes de crear las nuevas entidades del backend.

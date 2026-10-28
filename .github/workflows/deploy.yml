@@ -1,0 +1,58 @@
+name: CI/CD Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: finanzaspersonales-api     # El nombre exacto de tu App Service en Azure
+  DOTNET_VERSION: '10.0.x'                      # Versión de .NET que usas
+  SOLUTION: FinanzasPersonales.slnx             # Nombre de tu solución 
+  STARTUP_PROJECT: Finanzas.Api/Finanzas.Api.csproj  # Ruta a tu proyecto que tiene el Program.cs
+  MIGRATIONS_PROJECT: Finanzas.Infrastructure/Finanzas.Infrastructure.csproj # Proyecto donde están las migraciones
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restaurar dependencias
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Compilar (Release)
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore
+
+      - name: Publicar aplicación
+        run: dotnet publish ${{ env.STARTUP_PROJECT }} --configuration Release --no-build --output ./publish
+
+      - name: Instalar dotnet-ef (Solo para master/push)
+        if: github.event_name != 'pull_request'
+        run: dotnet tool update --global dotnet-ef
+
+      - name: Aplicar migraciones en Azure SQL (Solo para master/push)
+        if: github.event_name != 'pull_request'
+        env:
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+        run: |
+          dotnet ef database update \
+            --project ${{ env.MIGRATIONS_PROJECT }} \
+            --startup-project ${{ env.STARTUP_PROJECT }} \
+            --connection "$DB_CONNECTION_STRING"
+
+      - name: Desplegar en Azure App Service (Solo para master/push)
+        if: github.event_name != 'pull_request'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish

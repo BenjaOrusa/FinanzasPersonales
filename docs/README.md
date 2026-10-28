@@ -5,9 +5,15 @@ La documentación se actualizará de manera incremental junto con el código.
 
 ## Documentos
 
+- [Visión y potencial del producto](vision-y-potencial.md): evolución multiusuario, roles, propiedad, auditoría y hoja de ruta.
 - [Plan de diseño e implementación](plan-diseno-implementacion.md): hoja de ruta secuencial completa.
+- [Diseño funcional del frontend](diseno-frontend.md): mapa aprobado, páginas, estados y reglas visuales.
+- [Sistema visual del frontend](sistema-visual.md): paleta, tipografía, espaciado y componentes comunes.
+- [Diseño de base de datos](diseno-base-datos.md): tablas, relaciones, tipos, restricciones y cálculos.
+- [Scripts de base de datos](../database/README.md): orden y ejecución de los scripts SQL versionados.
 - [Convenciones de código](convenciones.md): nombres, organización y comentarios.
 - [Referencia HTTP](http.md): métodos, rutas y códigos de estado que utilizaremos.
+- [Integración React y API](integracion-frontend-api.md): recorrido de la primera petición real de extremo a extremo.
 - [Progreso de aprendizaje](progreso.md): conceptos estudiados y funcionalidades terminadas.
 
 ## Estructura actual
@@ -18,6 +24,7 @@ FinanzasPersonales/
 |   |-- Controllers/       Controladores HTTP
 |   |-- Models/            Clases que representan datos del dominio
 |   `-- Program.cs         Configuración y punto de entrada de la API
+|-- Finanzas.Web/          Proyecto independiente React, TypeScript y Vite
 |-- docs/                  Documentación del proyecto
 `-- FinanzasPersonales.slnx
 ```
