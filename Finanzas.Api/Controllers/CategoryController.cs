@@ -1,66 +1,104 @@
 using Finanzas.Application.DTOs.Request.Categories;
 using Finanzas.Application.DTOs.Response.Categories;
-using Finanzas.Domain.Models;
-using Finanzas.Infrastructure.Persistence;
+using Finanzas.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace Finanzas.Api.Controllers;
-
-/// <summary>Expone las categorías almacenadas en SQL Server.</summary>
-[ApiController]
-[Route("api/[controller]")]
-public class CategoryController(FinanzasDbContext context) : ControllerBase
+namespace Finanzas.Api.Controllers
 {
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<CategoryResponseDTO>>> GetAll(CancellationToken cancellationToken)
+    /// Expone las categorías almacenadas en SQL Server
+    [Authorize(Policy = Policies.StandardUsers)]
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CategoryController : ControllerBase
     {
-        var categories = await context.Categories.AsNoTracking()
-            .OrderBy(item => item.Description)
-            .Select(item => new CategoryResponseDTO { CategoryId = item.CategoryId, Description = item.Description,
-                CategoryType = item.CategoryType, Active = item.Active })
-            .ToListAsync(cancellationToken);
-        return Ok(categories);
-    }
+        private readonly ICategoryService categoryService;
 
-    [HttpPost]
-    public async Task<ActionResult<CategoryResponseDTO>> Create(CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
-    {
-        var description = categoryRequest.Description.Trim();
+        public CategoryController(ICategoryService categoryService)
+        {
+            this.categoryService = categoryService;
+        }
 
-        if (description.Length is 0 or > 100 || categoryRequest.CategoryType is not ("Ingreso" or "Gasto"))
-            return BadRequest("La descripción y el tipo de categoría no son válidos.");
 
-        if (await context.Categories.AnyAsync(item => item.Description == description && item.CategoryType == categoryRequest.CategoryType, cancellationToken))
-            return Conflict("Ya existe una categoría con esa descripción y tipo.");
+        [HttpGet]
+        public async Task<ActionResult<IReadOnlyList<CategoryResponseDTO>>> GetAll(CancellationToken cancellationToken)
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var categories = await categoryService.GetAllAsync(userEmail, cancellationToken);
+            return Ok(categories);
+        }
 
-        var category = new Category { Description = description, CategoryType = categoryRequest.CategoryType, 
-            Active = true };
 
-        context.Categories.Add(category);
+        //CU08 — Crear una categoría
+        [HttpPost]
+        public async Task<ActionResult<CategoryResponseDTO>> Create([FromBody] CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await categoryService.CreateAsync(userEmail, categoryRequest, cancellationToken);
+                return CreatedAtAction(nameof(GetAll), new { id = response.CategoryId }, response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
 
-        await context.SaveChangesAsync(cancellationToken);
+        // CU09: Editar una categoría propia
+        [HttpPut("{categoryId:Guid}")]
+        public async Task<ActionResult<CategoryResponseDTO>> Update(Guid categoryId, [FromBody] CategoryRequestDTO categoryRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var response = await categoryService.UpdateAsync(userEmail, categoryId, categoryRequest, cancellationToken);
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
 
-        var response = new CategoryResponseDTO { CategoryId = category.CategoryId, Description = category.Description, 
-            CategoryType = category.CategoryType, Active = category.Active };
 
-        return CreatedAtAction(nameof(GetAll), response);
-    }
+        //CU10 — Desactivar una categoría
+        [HttpPatch("{categoryId:Guid}/deactivate")]
+        public async Task<IActionResult> Deactivate(Guid categoryId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var success = await categoryService.DeactivateAsync(userEmail, categoryId, cancellationToken);
 
-    [HttpDelete("{CategoryId:guid}")]
-    public async Task<IActionResult> Delete(Guid categoryId, CancellationToken cancellationToken)
-    {
-        var category = await context.Categories.FindAsync([categoryId], cancellationToken);
+                if (!success) return NotFound();
 
-        if (category is null) return NotFound();
-
-        if (await context.Movements.AnyAsync(item => item.CategoryId == categoryId, cancellationToken))
-            return Conflict("La categoría tiene movimientos asociados.");
-
-        context.Categories.Remove(category);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        return NoContent();
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
     }
 }

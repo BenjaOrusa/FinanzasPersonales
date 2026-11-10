@@ -1,67 +1,130 @@
 using Finanzas.Application.DTOs.Request.Accounts;
 using Finanzas.Application.DTOs.Response.Accounts;
+using Finanzas.Application.Interfaces;
 using Finanzas.Domain.Models;
-using Finanzas.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Finanzas.Api.Controllers;
 
-/// <summary>Expone las cuentas almacenadas en SQL Server.</summary>
+// Expone las cuentas almacenadas en SQL Server
+[Authorize(Policy = Policies.StandardUsers)]
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(FinanzasDbContext context) : ControllerBase
+public class AccountController : ControllerBase
 {
+    private readonly IAccountService accountService;
+
+    public AccountController(IAccountService accountService) 
+    { 
+            this.accountService = accountService;
+    }
+
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AccountResponseDTO>>> GetAll(CancellationToken cancellationToken)
     {
-        var accounts = await context.Accounts.AsNoTracking().OrderBy(item => item.Description)
-            .Select(item => new AccountResponseDTO { AccountId = item.AccountId, Description = item.Description,
-                AccountType = item.AccountType, Active = item.Active })
-            .ToListAsync(cancellationToken);
+        var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
 
+        var accounts = await accountService.GetAllAsync(userEmail, cancellationToken);
         return Ok(accounts);
     }
 
+
+
+    //CU04 — Crear una cuenta financiera
     [HttpPost]
-    public async Task<ActionResult<AccountResponseDTO>> Create(AccountRequestDTO accountRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AccountResponseDTO>> Create([FromBody] AccountRequestDTO accountRequest, CancellationToken cancellationToken)
     {
-        var description = accountRequest.Description.Trim();
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
 
-        if (description.Length is 0 or > 100 || accountRequest.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
-
-            return BadRequest("La descripción y el tipo de cuenta no son válidos.");
-
-        if (await context.Accounts.AnyAsync(item => item.Description == description, cancellationToken))
-
-            return Conflict("Ya existe una cuenta con esa descripción.");
-
-        var account = new Account { Description = description, AccountType = accountRequest.AccountType, Active = true };
-        
-        context.Accounts.Add(account);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new AccountResponseDTO { AccountId = account.AccountId, 
-            Description = account.Description, AccountType = account.AccountType, Active = account.Active };
-
-        return CreatedAtAction(nameof(GetAll), response);
+            var response = await accountService.CreateAsync(userEmail, accountRequest, cancellationToken);
+            return CreatedAtAction(nameof(GetAll), new { id = response.AccountId }, response);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
     }
 
-    [HttpDelete("{AccountId:Guid}")]
-    public async Task<IActionResult> Eliminar(Guid accountId, CancellationToken cancellationToken)
+
+    // CU05: Editar una cuenta financiera propia
+    [HttpPut("{accountId:Guid}")]
+    public async Task<ActionResult<AccountResponseDTO>> Update(Guid accountId, [FromBody] AccountRequestDTO accountRequest, CancellationToken cancellationToken)
     {
-        var account = await context.Accounts.FindAsync([accountId], cancellationToken);
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var response = await accountService.UpdateAsync(userEmail, accountId, accountRequest, cancellationToken);
 
-        if (account is null) return NotFound();
+            return Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
 
-        if (await context.Movements.AnyAsync(item => item.AccountId == accountId, cancellationToken))
 
-            return Conflict("La cuenta tiene movimientos asociados.");
+    //CU06 — Desactivar una cuenta financiera
+    [HttpPatch("{accountId:Guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var success = await accountService.DeactivateAsync(userEmail, accountId, cancellationToken);
 
-        context.Accounts.Remove(account);
+            if (!success) return NotFound();
 
-        await context.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
 
-        return NoContent();
+    // CU07: Consultar saldo y detalles de una cuenta específica del usuario
+    [HttpGet("{accountId:Guid}")]
+    public async Task<ActionResult<AccountResponseDTO>> GetById(Guid accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var account = await accountService.GetByIdAsync(userEmail, accountId, cancellationToken);
+
+            if (account is null) return NotFound();
+
+            return Ok(account);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
     }
 }
+
