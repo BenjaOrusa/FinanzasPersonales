@@ -18,16 +18,21 @@ namespace Finanzas.Infrastructure.Repositories
         }
 
 
-        public async Task<IReadOnlyList<Account>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
-                    await context.Accounts
-                        .AsNoTracking()
-                        .Where(item => item.UserId == userId)
-                        .OrderBy(item => item.Description)
-                        .ToListAsync(cancellationToken);
+     public async Task<IReadOnlyList<Account>> GetAllByUserIdAsync(Guid userId, bool onlyActive, CancellationToken ct) =>
+    await context.Accounts
+        .AsNoTracking()
+        .Include(item => item.Currency)
+        .Where(item => item.UserId == userId && (!onlyActive || item.Active))
+        .OrderBy(item => item.Description)
+        .ToListAsync(ct);
 
-        public async Task<Account?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken) =>
-            await context.Accounts
-                .FirstOrDefaultAsync(item => item.AccountId == id && item.UserId == userId, cancellationToken);
+        public async Task<Account?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken ct) =>
+    await context.Accounts
+        .Include(item => item.Currency)
+        .FirstOrDefaultAsync(item => item.AccountId == id && item.UserId == userId, ct);
+
+        public async Task<Currency?> GetCurrencyByIdAsync(Guid currencyId, CancellationToken ct) =>
+            await context.Currencies.FirstOrDefaultAsync(item => item.Id == currencyId, ct);
 
         public async Task<bool> ExistsByDescriptionAndUserAsync(string description, Guid userId, CancellationToken cancellationToken) =>
             await context.Accounts
@@ -44,7 +49,6 @@ namespace Finanzas.Infrastructure.Repositories
 
         public void Add(Account account) => context.Accounts.Add(account);
 
-        public void Remove(Account account) => context.Accounts.Remove(account);
 
         public async Task SaveChangesAsync(CancellationToken cancellationToken) =>
             await context.SaveChangesAsync(cancellationToken);

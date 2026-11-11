@@ -1,5 +1,5 @@
 ﻿using Finanzas.Application.DTOs.Request.Movements;
-using Finanzas.Api.Contracts.Movements;
+using Finanzas.Application.DTOs.Response.Movements;
 
 namespace Finanzas.Application.Interfaces
 {

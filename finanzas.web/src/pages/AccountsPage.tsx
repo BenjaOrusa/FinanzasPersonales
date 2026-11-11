@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import type { Account, Movement } from '../types/finance'
 
-interface AccountsPageProps { accounts: Account[]; movements: Movement[]; onAdd: (account: Omit<Account, 'id'>) => Promise<void>; onDelete: (id: number) => Promise<void> }
+interface AccountsPageProps { accounts: Account[]; movements: Movement[]; onAdd: (account: Omit<Account, 'id'>) => Promise<void>; onDelete: (id: string) => Promise<void> }
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const accountLabels = { cash: 'Efectivo', bank: 'Cuenta bancaria', wallet: 'Billetera virtual' }
 
@@ -16,7 +16,7 @@ function AccountsPage({ accounts, movements, onAdd, onDelete }: AccountsPageProp
     catch (saveError) { setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar la cuenta.') }
     finally { setIsSaving(false) }
   }
-  async function remove(id: number) {
+  async function remove(id: string) {
     try { setError(''); await onDelete(id) }
     catch (deleteError) { setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar la cuenta.') }
   }

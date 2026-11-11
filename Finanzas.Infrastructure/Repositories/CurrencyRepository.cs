@@ -18,6 +18,8 @@ namespace Finanzas.Infrastructure.Repositories
             this.context = context;
         }
 
+        public void Add(Currency currency) => context.Currencies.Add(currency);
+
         public async Task<IReadOnlyList<Currency>> GetAllAsync(CancellationToken cancellationToken) =>
             await context.Currencies
                 .AsNoTracking()

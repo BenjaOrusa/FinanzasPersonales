@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import type { Movement, MovementType } from '../types/finance'
 
-interface MovementsPageProps { movements: Movement[]; onDelete: (id: number) => Promise<void> }
+interface MovementsPageProps { movements: Movement[]; onDelete: (id: string) => Promise<void> }
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 function MovementsPage({ movements, onDelete }: MovementsPageProps) {

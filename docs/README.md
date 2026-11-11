@@ -5,6 +5,11 @@ La documentación se actualizará de manera incremental junto con el código.
 
 ## Documentos
 
+- [Guía actual de instalación y evaluación](../README.md): ejecutar y probar esta entrega.
+- [Integración de cotizaciones](integracion-cotizaciones.md): HttpClientFactory, actualización automática y comprobación manual.
+
+Los documentos de planificación siguientes registran etapas anteriores; para el estado implementado prevalecen las dos guías anteriores.
+
 - [Visión y potencial del producto](vision-y-potencial.md): evolución multiusuario, roles, propiedad, auditoría y hoja de ruta.
 - [Plan de diseño e implementación](plan-diseno-implementacion.md): hoja de ruta secuencial completa.
 - [Diseño funcional del frontend](diseno-frontend.md): mapa aprobado, páginas, estados y reglas visuales.
@@ -22,11 +27,13 @@ La documentación se actualizará de manera incremental junto con el código.
 FinanzasPersonales/
 |-- Finanzas.Api/          Proyecto ASP.NET Core Web API
 |   |-- Controllers/       Controladores HTTP
-|   |-- Models/            Clases que representan datos del dominio
 |   `-- Program.cs         Configuración y punto de entrada de la API
-|-- Finanzas.Web/          Proyecto independiente React, TypeScript y Vite
+|-- Finanzas.Domain/       Entidades y contratos
+|-- Finanzas.Application/  Servicios y DTOs
+|-- Finanzas.Infrastructure/ EF Core, repositorios y proveedores
+|-- finanzas.web/          Proyecto independiente React, TypeScript y Vite
 |-- docs/                  Documentación del proyecto
 `-- FinanzasPersonales.slnx
 ```
 
-El frontend se creará como un proyecto separado cuando corresponda comenzar esa etapa.
+El frontend existe, pero su login y la integración completa con la API siguen pendientes.

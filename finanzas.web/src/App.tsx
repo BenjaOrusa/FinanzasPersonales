@@ -46,7 +46,7 @@ function App() {
     return () => controller.abort()
   }, [])
 
-  async function saveMovement(movement: GuardarMovimiento, id?: number) {
+  async function saveMovement(movement: GuardarMovimiento, id?: string) {
     const saved = id ? await actualizarMovimiento(id, movement) : await crearMovimiento(movement)
     setMovements((current) => id ? current.map((item) => item.id === id ? saved : item) : [saved, ...current])
   }
@@ -57,7 +57,7 @@ function App() {
     setCategories((items) => [...items, saved].sort((a, b) => a.name.localeCompare(b.name)))
   }
 
-  async function deleteCategory(id: number) {
+  async function deleteCategory(id: string) {
     const category = categories.find((item) => item.id === id)
     if (!category) return
     if (movements.some((item) => item.category === category.name)) { window.alert('La categoría tiene movimientos asociados y no puede eliminarse.'); return }
@@ -70,14 +70,14 @@ function App() {
     setAccounts((items) => [...items, saved].sort((a, b) => a.name.localeCompare(b.name)))
   }
 
-  async function deleteAccount(id: number) {
+  async function deleteAccount(id: string) {
     const account = accounts.find((item) => item.id === id)
     if (!account) return
     if (movements.some((item) => item.account === account.name)) { window.alert('La cuenta tiene movimientos asociados y no puede eliminarse.'); return }
     if (window.confirm(`¿Eliminar la cuenta ${account.name}?`)) { await eliminarCuenta(id); setAccounts((items) => items.filter((item) => item.id !== id)) }
   }
 
-  async function deleteMovement(id: number) {
+  async function deleteMovement(id: string) {
     await eliminarMovimiento(id)
     setMovements((items) => items.filter((item) => item.id !== id))
   }

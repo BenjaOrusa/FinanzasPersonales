@@ -1,4 +1,6 @@
+using Finanzas.Api;
 using Finanzas.Application.Interfaces;
+using Finanzas.Api.BackgroundServices;
 using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.ExternalServices;
@@ -52,6 +54,22 @@ builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 // Cotizaciones / Equivalencias
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddOptions<DollarQuoteRefreshSettings>()
+    .Bind(builder.Configuration.GetSection(DollarQuoteRefreshSettings.SectionName))
+    .Validate(settings => settings.IntervalMinutes is >= 1 and <= 1440,
+        "DollarQuoteRefresh:IntervalMinutes debe estar entre 1 y 1440.")
+    .ValidateOnStart();
+builder.Services.AddHostedService<DollarQuoteRefreshWorker>();
+
+builder.Services.Configure<DollarApiSettings>(builder.Configuration.GetSection(DollarApiSettings.SectionName));
+var dollarApiSettings = builder.Configuration.GetSection(DollarApiSettings.SectionName).Get<DollarApiSettings>()
+    ?? throw new InvalidOperationException("Falta la sección DollarApi.");
+builder.Services.AddHttpClient<IDollarQuoteProvider, DollarApiQuoteProvider>(client =>
+{
+    client.BaseAddress = new Uri(dollarApiSettings.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 builder.Services.AddScoped<IFinancialSummaryService, FinancialSummaryService>();
 
@@ -104,8 +122,9 @@ builder.Services
 // CONFIGURACIÓN DE POLÍTICAS DE AUTORIZACIÓN (POLICIES)
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminsOnly", policy => policy.RequireRole("Administrator"));
-    options.AddPolicy("StandardUsers", policy => policy.RequireRole("Administrator", "Customer"));
+    options.AddPolicy(Policies.AdminsOnly, policy => policy.RequireRole("Administrator"));
+    options.AddPolicy(Policies.StandardUsers, policy => policy.RequireRole("Customer"));
+    options.AddPolicy(Policies.AllUsers, p => p.RequireRole("Administrator", "Customer"));
 });
 
 builder.Services.AddControllers()
@@ -188,10 +207,15 @@ static async Task VerificarConexionAsync(
     await using var scope = services.CreateAsyncScope();
     var context = scope.ServiceProvider.GetRequiredService<FinanzasDbContext>();
 
-    if (!await context.Database.CanConnectAsync())
+    try
+    {
+        await context.Database.OpenConnectionAsync();
+        await context.Database.CloseConnectionAsync();
+    }
+    catch (Exception ex)
     {
         throw new InvalidOperationException(
-            "No fue posible conectar con la base FinanzasPersonales.");
+            "No fue posible conectar con la base FinanzasPersonales: " + ex.Message, ex);
     }
 
     logger.LogInformation(
