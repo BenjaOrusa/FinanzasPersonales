@@ -207,10 +207,15 @@ static async Task VerificarConexionAsync(
     await using var scope = services.CreateAsyncScope();
     var context = scope.ServiceProvider.GetRequiredService<FinanzasDbContext>();
 
-    if (!await context.Database.CanConnectAsync())
+    try
+    {
+        await context.Database.OpenConnectionAsync();
+        await context.Database.CloseConnectionAsync();
+    }
+    catch (Exception ex)
     {
         throw new InvalidOperationException(
-            "No fue posible conectar con la base FinanzasPersonales.");
+            "No fue posible conectar con la base FinanzasPersonales: " + ex.Message, ex);
     }
 
     logger.LogInformation(
