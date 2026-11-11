@@ -8,7 +8,7 @@ La integración sigue el cliente HTTP tipado del ejemplo Gestión Complejo.
 2. `ExchangeRateService` solicita la última cotización mediante `IDollarQuoteProvider` (Domain).
 3. `DollarApiQuoteProvider` (Infrastructure) recibe `HttpClient` por constructor y consulta `GET v1/dolares/oficial`. Interpreta el JSON con `GetFromJsonAsync`.
 4. Application usa `venta` como pesos por dólar y convierte `fechaActualizacion` al día de Argentina.
-5. El servicio resuelve las monedas `Dólar Estadounidense` y `Pesos Argentinos`, creándolas si faltan, y guarda mediante el repositorio. El DbContext compartido persiste los cambios juntos.
+5. El servicio resuelve las monedas `Dólar Estadounidense` y `Pesos Argentinos` y guarda mediante el repositorio. La migración `SeedBaseCurrencies` ya deja ambas monedas disponibles, sin necesitar una consulta externa; el servicio conserva la creación si faltan como respaldo. El DbContext compartido persiste los cambios juntos.
 
 `Program.cs` registra el cliente con `AddHttpClient<IDollarQuoteProvider, DollarApiQuoteProvider>`, URL base desde `DollarApi:BaseUrl` y timeout de diez segundos. La configuración predeterminada es `https://dolarapi.com/`.
 

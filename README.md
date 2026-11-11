@@ -50,7 +50,7 @@ Requisitos: **SDK .NET 10**, **SQL Server** y certificado HTTPS de desarrollo co
    dotnet ef database update --project .\Finanzas.Infrastructure\Finanzas.Infrastructure.csproj --startup-project .\Finanzas.Api\Finanzas.Presentation.csproj
    ```
 
-   No ejecutar los scripts antiguos de `database/scripts`: pertenecen al modelo inicial en español. Las migraciones no crean usuarios ni contraseñas de prueba.
+   La migración `SeedBaseCurrencies` crea Pesos Argentinos y Dólar Estadounidense si faltan, conservando los IDs de las monedas existentes. No depende de DolarApi ni carga cotizaciones. No ejecutar los scripts antiguos de `database/scripts`: pertenecen al modelo inicial en español. Las migraciones no crean usuarios ni contraseñas de prueba.
 
 4. Iniciar:
 
@@ -65,7 +65,7 @@ Requisitos: **SDK .NET 10**, **SQL Server** y certificado HTTPS de desarrollo co
 1. **POST `/api/Auth/register`**: registrar un usuario con `Email`, `Password`, `Name` y `Surname`. Su rol inicial es `Customer`.
 2. **POST `/api/Auth/login`**: enviar `Email` y `Password`. Copiar solamente el valor de `Token`.
 3. Pulsar **Authorize**, pegar el token sin comillas ni el prefijo `Bearer`, autorizar y cerrar el diálogo.
-4. **GET `/api/Currency`**: consultar monedas. La importación automática crea USD y ARS cuando recibe una respuesta válida del proveedor.
+4. **GET `/api/Currency`**: consultar pesos argentinos y dólares, creados por las migraciones. Copiar el `Id` de la moneda para crear una cuenta. No es necesario importar cotizaciones antes de este paso.
 5. **POST `/api/Account`** y **POST `/api/Category`**: crear una cuenta y una categoría. Usar sus identificadores para **POST `/api/Movement`**. Swagger muestra los campos requeridos.
 6. **GET `/api/Movement`** y **GET `/api/FinancialSummary`**: consultar movimientos propios y resumen por moneda.
 7. **GET `/api/ExchangeRate/movements-dollar-equivalent`**: consultar equivalencias históricas de los movimientos propios.

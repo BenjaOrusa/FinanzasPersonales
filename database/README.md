@@ -3,6 +3,7 @@
 El esquema actual se administra con **Entity Framework Core y migraciones**, según el [README principal](../README.md#ejecutar-la-api-localmente).
 
 - `Finanzas.Infrastructure/Migrations` contiene las migraciones y el snapshot actual.
+- `SeedBaseCurrencies` agrega Pesos Argentinos y Dólar Estadounidense solo si faltan, sin cambiar los IDs existentes. Al revertir esta migración se conservan las monedas para proteger las referencias de cuentas, movimientos y cotizaciones. No inserta cotizaciones ni usuarios.
 - `scripts/001_crear_estructura_inicial.sql` y `scripts/002_cargar_datos_iniciales.sql` son material histórico del modelo inicial en español. **No usarlos para instalar la API actual.**
 - `traslado-datos-prueba.sql` documenta el traspaso local desde aquellas tablas antiguas. Requiere las tablas antiguas, destinos vacíos y el usuario indicado previamente registrado. No es un seed general ni corresponde a una instalación nueva.
 
