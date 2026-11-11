@@ -4,7 +4,6 @@
   <Project Path="Finanzas.Application/Finanzas.Application.csproj" Id="850a9862-fc30-410f-9fd0-dcd2f7bd3f07" />
   <Project Path="Finanzas.Domain/Finanzas.Domain.csproj" Id="4c54d34b-ac9c-4a3f-8a33-40ef50a3012a" />
   <Project Path="Finanzas.Infrastructure/Finanzas.Infrastructure.csproj" Id="66d122ba-5c04-40d9-a8a2-d09b23b7abf3" />
-  <Project Path="Finanzas.Tests/Finanzas.Tests.csproj" />
   <Project Path="finanzas.web/finanzas.web.esproj">
     <Build />
     <Deploy />

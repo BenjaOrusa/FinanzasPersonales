@@ -6,7 +6,7 @@ La documentación se actualizará de manera incremental junto con el código.
 ## Documentos
 
 - [Guía actual de instalación y evaluación](../README.md): ejecutar y probar esta entrega.
-- [Integración de cotizaciones](integracion-cotizaciones.md): HttpClientFactory, actualización automática y pruebas.
+- [Integración de cotizaciones](integracion-cotizaciones.md): HttpClientFactory, actualización automática y comprobación manual.
 
 Los documentos de planificación siguientes registran etapas anteriores; para el estado implementado prevalecen las dos guías anteriores.
 
@@ -31,7 +31,6 @@ FinanzasPersonales/
 |-- Finanzas.Domain/       Entidades y contratos
 |-- Finanzas.Application/  Servicios y DTOs
 |-- Finanzas.Infrastructure/ EF Core, repositorios y proveedores
-|-- Finanzas.Tests/        Pruebas automatizadas
 |-- finanzas.web/          Proyecto independiente React, TypeScript y Vite
 |-- docs/                  Documentación del proyecto
 `-- FinanzasPersonales.slnx

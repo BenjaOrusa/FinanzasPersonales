@@ -214,6 +214,3 @@ static async Task VerificarConexionAsync(
     logger.LogInformation(
         "Conexión con la base FinanzasPersonales verificada correctamente.");
 }
-
-// Permite alojar la API real en las pruebas de integración.
-public partial class Program { }

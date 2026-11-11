@@ -47,14 +47,10 @@ La aplicación debe permanecer encendida para consultar automáticamente. Al rei
 
 Si el 9 de enero se guardó 1 USD = 1.000 ARS y el 11 de enero 1 USD = 2.000 ARS, un movimiento de 10.000 ARS del día 9 equivale a USD 10 y otro del 11 a USD 5. Uno del día 10 usa la cotización del 9 y responde `Convertido con última cotización anterior`, junto con la fecha utilizada. Uno anterior al 9 queda `Sin cotización aplicable`. Nunca se usa la cotización futura del 11 para esos movimientos anteriores.
 
-## Inicio y pruebas repetibles
+## Inicio y comprobación manual
 
 En Visual Studio seleccionar el perfil compartido `Finanzas - API y Web` y ejecutar con F5. Inicia Presentación y Web y abre Swagger y el frontend. Los perfiles de Presentación tienen `launchBrowser: true` y `launchUrl: swagger`. Compilar sin ejecutar no inicia servidores.
 
-```powershell
-dotnet test Finanzas.Tests/Finanzas.Tests.csproj
-```
-
-Las pruebas alojan la API real con JWT, el cliente HTTP con un proveedor simulado y EF en memoria: validan autorización, JSON inválido, errores HTTP, importaciones repetidas/concurrentes, zona horaria argentina, equivalencia exacta/anterior/ausente, separación por usuario y actualización automática con reloj simulado. No tocan SQL local ni dependen de Internet. No sustituyen una prueba de las restricciones de SQL Server; el circuito real se verifica por separado contra la base local.
+Desde Swagger: importar como administrador, repetir la operación y comprobar que se conserva una fila por fecha y par de monedas. Consultar las equivalencias con el propietario de los movimientos y comparar importe, fecha usada y estado. Sin token se espera 401; con un usuario Customer, la importación devuelve 403. El circuito real se verificó contra DolarApi y SQL Server local. El proyecto de pruebas automáticas se conserva aparte para desarrollo y no forma parte de esta entrega ni de su workflow.
 
 Documentación del proveedor: https://dolarapi.com/docs/argentina/operations/get-dolar-oficial

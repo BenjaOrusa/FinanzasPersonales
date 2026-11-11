@@ -4,7 +4,7 @@ API para administrar cuentas, categorías y movimientos por usuario, consultar s
 
 ## Versión para evaluar
 
-**`main` es la rama de versiones y de entrega.** Los cambios se integran primero en **`desarrollo`** y luego se pasan a `main` para publicar una versión. La API incluye DolarApi, actualización automática y pruebas. La demostración funcional se realiza desde Swagger. El frontend está en desarrollo: todavía no tiene login ni envío de JWT.
+**`main` es la rama de versiones y de entrega.** Los cambios se integran primero en **`desarrollo`** y luego se pasan a `main` para publicar una versión. La API incluye DolarApi y actualización automática. La demostración funcional se realiza desde Swagger. El frontend está en desarrollo: todavía no tiene login ni envío de JWT.
 
 ```powershell
 git clone --branch main https://github.com/BenjaOrusa/FinanzasPersonales.git
@@ -19,7 +19,6 @@ cd FinanzasPersonales
 | `Finanzas.Application` | Casos de uso, servicios y DTOs. |
 | `Finanzas.Domain` | Entidades y contratos. |
 | `Finanzas.Infrastructure` | EF Core, SQL Server, repositorios y clientes externos. |
-| `Finanzas.Tests` | Pruebas de la API y de la actualización automática. |
 | `finanzas.web` | React, TypeScript y Vite; interfaz en desarrollo. |
 
 Entidades: User, TypeOfUser, Account, Category, Movement, Currency y ExchangeRate. La cotización tiene clave compuesta por moneda base, moneda destino y fecha.
@@ -111,15 +110,11 @@ Sin token se responde 401; con rol insuficiente, 403.
 - Se consulta al iniciar la API y cada 60 minutos mientras permanezca encendida. Configuración: `DollarQuoteRefresh`.
 - Este endpoint del proveedor entrega la última cotización; no recupera días históricos faltantes. Se pueden incorporar con la carga manual.
 
-Ver [el circuito completo y sus pruebas](docs/integracion-cotizaciones.md).
+Ver [el circuito completo y la guía de comprobación manual](docs/integracion-cotizaciones.md).
 
-## Pruebas
+## Verificación
 
-```powershell
-dotnet test .\Finanzas.Tests\Finanzas.Tests.csproj
-```
-
-Las 12 pruebas cubren permisos, importaciones repetidas y concurrentes, fallos del proveedor, fecha argentina, equivalencia exacta/anterior/ausente, separación por usuario y tarea automática. Alojan la API real con JWT, EF en memoria y proveedor simulado. No requieren SQL ni Internet después de restaurar paquetes. El circuito con DolarApi y SQL Server se verificó por separado localmente.
+La entrega se verifica desde Swagger siguiendo los pasos anteriores. Comprobar el login, los permisos, la importación repetida sin duplicados y las equivalencias por fecha. El circuito con DolarApi y SQL Server se verificó localmente. El workflow restaura, compila y publica la API; esta versión de entrega no incluye un proyecto de pruebas automáticas.
 
 ## Frontend y Visual Studio
 
