@@ -121,9 +121,9 @@ namespace Finanzas.Api.Controllers
         }
 
         // CU14: Consultar movimientos con filtros opcionales (tipo, fechas, cuenta, categoría)
-        [HttpGet]
+        [HttpGet("filter")]
         [ProducesResponseType(typeof(IReadOnlyList<MovementResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAll(
+        public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAllByFilter(
             [FromQuery] string? movementType,
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,

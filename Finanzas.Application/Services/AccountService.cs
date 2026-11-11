@@ -24,19 +24,12 @@ namespace Finanzas.Application.Services
 
 
 
-        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail,bool active, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
-            var accounts = await accountRepository.GetAllByUserIdAsync(user.Id, cancellationToken);
+            var accounts = await accountRepository.GetAllByUserIdAsync(user.Id,active, cancellationToken);
 
-            return accounts.Select(item => new AccountResponseDTO
-            {
-                AccountId = item.AccountId,
-                Description = item.Description,
-                AccountType = item.AccountType,
-                Balance = item.Balance,
-                Active = item.Active
-            }).ToList();
+            return accounts.Select(a => MapToResponseDTO(a, a.Currency.Description)).ToList();
         }
 
         public async Task<AccountResponseDTO?> GetByIdAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
@@ -44,44 +37,27 @@ namespace Finanzas.Application.Services
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
             var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
 
-            return account is null ? null : MapToResponseDTO(account);
+            return account is null ? null : MapToResponseDTO(account, account.Currency.Description);
         }
 
-        public async Task<AccountResponseDTO> CreateAsync(string userEmail, AccountRequestDTO request, CancellationToken cancellationToken)
+        public async Task<AccountResponseDTO> CreateAsync(string userEmail, AccountRequestDTO request, CancellationToken ct)
         {
-            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
-
+            var user = await userService.GetValidUserAsync(userEmail, ct);
             var description = request.Description.Trim();
 
             if (description.Length is 0 or > 100 || request.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
-            {
                 throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
-            }
 
-            if (request.CurrencyId == Guid.Empty)
-            {
-                throw new ArgumentException("Debe especificar una moneda válida para la cuenta.");
-            }
+            var currency = await GetValidCurrencyAsync(request.CurrencyId, ct);
 
-            if (await accountRepository.ExistsByDescriptionAndUserAsync(description, user.Id, cancellationToken))
-            {
+            if (await accountRepository.ExistsByDescriptionAndUserAsync(description, user.Id, ct))
                 throw new InvalidOperationException("Ya existe una cuenta con esa descripción para este usuario.");
-            }
 
-            // Uso del constructor blindado de la entidad Account
-            var account = new Account(description, request.AccountType, user.Id, request.CurrencyId);
-
+            var account = new Account(description, request.AccountType, user.Id, currency.Id);
             accountRepository.Add(account);
-            await accountRepository.SaveChangesAsync(cancellationToken);
+            await accountRepository.SaveChangesAsync(ct);
 
-            return new AccountResponseDTO
-            {
-                AccountId = account.AccountId,
-                Description = account.Description,
-                AccountType = account.AccountType,
-                Balance = account.Balance,
-                Active = account.Active
-            };
+            return MapToResponseDTO(account, currency.Description);
         }
 
         public async Task<bool> DeactivateAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
@@ -114,10 +90,7 @@ namespace Finanzas.Application.Services
                 throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
             }
 
-            if (request.CurrencyId == Guid.Empty)
-            {
-                throw new ArgumentException("Debe especificar una moneda válida para la cuenta.");
-            }
+            var currency = await GetValidCurrencyAsync(request.CurrencyId, cancellationToken);
 
             // Validar unicidad de descripción excluyendo la cuenta actual
             if (await accountRepository.ExistsByDescriptionAndUserExcludingIdAsync(description, user.Id, accountId, cancellationToken))
@@ -136,21 +109,31 @@ namespace Finanzas.Application.Services
             }
 
             // Actualizar mediante el método de dominio controlado
-            account.Update(description, request.AccountType, request.CurrencyId);
+            account.Update(description, request.AccountType, currency.Id);
 
             await accountRepository.SaveChangesAsync(cancellationToken);
 
-            return MapToResponseDTO(account);
+            return MapToResponseDTO(account, currency.Description);
         }
 
-        private static AccountResponseDTO MapToResponseDTO(Account account) => new()
+        private async Task<Currency> GetValidCurrencyAsync(Guid currencyId, CancellationToken ct)
+        {
+            if (currencyId == Guid.Empty)
+                throw new ArgumentException("Debe especificar una moneda válida para la cuenta.");
+
+            return await accountRepository.GetCurrencyByIdAsync(currencyId, ct)
+                ?? throw new ArgumentException("La moneda indicada no existe.");
+        }
+
+        private static AccountResponseDTO MapToResponseDTO(Account account, string currencyDescription) => new()
         {
             AccountId = account.AccountId,
             Description = account.Description,
             AccountType = account.AccountType,
             Active = account.Active,
             Balance = account.Balance,
-            CurrencyId = account.CurrencyId
+            CurrencyId = account.CurrencyId,
+            CurrencyDescription = currencyDescription
         };
     }
 

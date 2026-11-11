@@ -1,3 +1,4 @@
+using Finanzas.Api;
 using Finanzas.Application.Interfaces;
 using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
@@ -104,8 +105,9 @@ builder.Services
 // CONFIGURACIÓN DE POLÍTICAS DE AUTORIZACIÓN (POLICIES)
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminsOnly", policy => policy.RequireRole("Administrator"));
-    options.AddPolicy("StandardUsers", policy => policy.RequireRole("Administrator", "Customer"));
+    options.AddPolicy(Policies.AdminsOnly, policy => policy.RequireRole("Administrator"));
+    options.AddPolicy(Policies.StandardUsers, policy => policy.RequireRole("Customer"));
+    options.AddPolicy(Policies.AllUsers, p => p.RequireRole("Administrator", "Customer"));
 });
 
 builder.Services.AddControllers()
