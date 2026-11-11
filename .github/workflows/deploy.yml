@@ -11,7 +11,7 @@ env:
   AZURE_WEBAPP_NAME: finanzaspersonales-api     # El nombre exacto de tu App Service en Azure
   DOTNET_VERSION: '10.0.x'                      # Versión de .NET que usas
   SOLUTION: FinanzasPersonales.slnx             # Nombre de tu solución 
-  STARTUP_PROJECT: Finanzas.Api/Finanzas.Api.csproj  # Ruta a tu proyecto que tiene el Program.cs
+  STARTUP_PROJECT: Finanzas.Api/Finanzas.Presentation.csproj
   MIGRATIONS_PROJECT: Finanzas.Infrastructure/Finanzas.Infrastructure.csproj # Proyecto donde están las migraciones
 
 jobs:
@@ -27,23 +27,25 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restaurar dependencias
-        run: dotnet restore ${{ env.SOLUTION }}
+        run: dotnet restore ${{ env.STARTUP_PROJECT }}
 
       - name: Compilar (Release)
-        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore
+        run: dotnet build ${{ env.STARTUP_PROJECT }} --configuration Release --no-restore
 
       - name: Publicar aplicación
         run: dotnet publish ${{ env.STARTUP_PROJECT }} --configuration Release --no-build --output ./publish
 
       - name: Instalar dotnet-ef (Solo para master/push)
         if: github.event_name != 'pull_request'
-        run: dotnet tool update --global dotnet-ef
+        run: dotnet tool restore
 
       - name: Aplicar migraciones en Azure SQL (Solo para master/push)
         if: github.event_name != 'pull_request'
         env:
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
         run: |
+          # Solo para construir el host de EF; no configura ni cambia el JWT de Azure.
+          export Jwt__Key="$(openssl rand -hex 32)"
           dotnet ef database update \
             --project ${{ env.MIGRATIONS_PROJECT }} \
             --startup-project ${{ env.STARTUP_PROJECT }} \

@@ -3,12 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import type { Account, Category, Movement, MovementType } from '../types/finance'
 import type { GuardarMovimiento } from '../services/movementsApi'
 
-interface MovementFormPageProps { movements: Movement[]; categories: Category[]; accounts: Account[]; onSave: (movement: GuardarMovimiento, id?: number) => Promise<void> }
+interface MovementFormPageProps { movements: Movement[]; categories: Category[]; accounts: Account[]; onSave: (movement: GuardarMovimiento, id?: string) => Promise<void> }
 
 function MovementFormPage({ movements, categories, accounts, onSave }: MovementFormPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const existing = movements.find((item) => item.id === Number(id))
+  const existing = movements.find((item) => item.id === id)
   const [type, setType] = useState<MovementType>(existing?.type ?? 'expense')
   const [description, setDescription] = useState(existing?.description ?? '')
   const [amount, setAmount] = useState(existing?.amount.toString() ?? '')
@@ -24,7 +24,7 @@ function MovementFormPage({ movements, categories, accounts, onSave }: MovementF
     if (!description.trim() || numericAmount <= 0 || !categoryId || !accountId) { setError('Completá todos los campos obligatorios con valores válidos.'); return }
     try {
       setIsSaving(true); setError('')
-      await onSave({ description: description.trim(), amount: numericAmount, date, categoryId: Number(categoryId), accountId: Number(accountId), type }, existing?.id)
+      await onSave({ description: description.trim(), amount: numericAmount, date, categoryId, accountId, type }, existing?.id)
       navigate('/movimientos')
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar el movimiento.')

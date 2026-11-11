@@ -1,4 +1,4 @@
-using Finanzas.Api.Contracts.Movements;
+using Finanzas.Application.DTOs.Response.Movements;
 using Finanzas.Application.DTOs.Request.Movements;
 using Finanzas.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -20,15 +20,6 @@ namespace Finanzas.Api.Controllers
             this.movementService = movementService;
         }
 
-
-        [HttpGet]
-        [ProducesResponseType(typeof(IReadOnlyList<MovementResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAll(CancellationToken cancellationToken)
-        {
-            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
-            var movements = await movementService.GetAllAsync(userEmail, cancellationToken);
-            return Ok(movements);
-        }
 
         [HttpGet("{movementId:Guid}")]
         [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status200OK)]

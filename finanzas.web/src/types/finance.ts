@@ -1,26 +1,26 @@
 export type MovementType = 'income' | 'expense'
 
 export interface Movement {
-  id: number
+  id: string
   description: string
   category: string
   account: string
   date: string
   amount: number
   type: MovementType
-  categoryId: number
-  accountId: number
+  categoryId: string
+  accountId: string
   note?: string
 }
 
 export interface Category {
-  id: number
+  id: string
   name: string
   type: MovementType
 }
 
 export interface Account {
-  id: number
+  id: string
   name: string
   type: 'cash' | 'bank' | 'wallet'
 }

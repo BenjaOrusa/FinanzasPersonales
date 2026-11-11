@@ -1,4 +1,4 @@
-﻿using Finanzas.Api.Contracts.Movements;
+﻿using Finanzas.Application.DTOs.Response.Movements;
 using Finanzas.Application.DTOs.Request.Movements;
 using Finanzas.Application.Interfaces;
 using Finanzas.Domain.Interfaces;

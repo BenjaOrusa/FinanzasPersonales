@@ -1,32 +1,10 @@
 # Base de datos
 
-Esta carpeta contiene scripts SQL versionados y ordenados para construir la base de datos
-de Finanzas Personales de manera reproducible.
+El esquema actual se administra con **Entity Framework Core y migraciones**, según el [README principal](../README.md#ejecutar-la-api-localmente).
 
-## Convenciones
+- `Finanzas.Infrastructure/Migrations` contiene las migraciones y el snapshot actual.
+- `SeedBaseCurrencies` agrega Pesos Argentinos y Dólar Estadounidense solo si faltan, sin cambiar los IDs existentes. Al revertir esta migración se conservan las monedas para proteger las referencias de cuentas, movimientos y cotizaciones. No inserta cotizaciones ni usuarios.
+- `scripts/001_crear_estructura_inicial.sql` y `scripts/002_cargar_datos_iniciales.sql` son material histórico del modelo inicial en español. **No usarlos para instalar la API actual.**
+- `traslado-datos-prueba.sql` documenta el traspaso local desde aquellas tablas antiguas. Requiere las tablas antiguas, destinos vacíos y el usuario indicado previamente registrado. No es un seed general ni corresponde a una instalación nueva.
 
-- Los scripts se numeran según su orden de ejecución.
-- Un script ejecutado no se modifica para alterar una base existente; se agrega uno nuevo.
-- Los scripts se revisan antes de ejecutarse.
-- Los saldos y totales se calculan desde `Movimientos`; no se almacenan.
-- Los datos de prueba se incorporarán en un script separado de la estructura.
-
-## Scripts
-
-1. [`001_crear_estructura_inicial.sql`](scripts/001_crear_estructura_inicial.sql): crea la
-   base `FinanzasPersonales`, sus tres tablas, restricciones e índices iniciales.
-2. [`002_cargar_datos_iniciales.sql`](scripts/002_cargar_datos_iniciales.sql): incorpora
-   categorías, cuentas y movimientos equivalentes a los datos demostrativos del frontend.
-
-## Ejecución
-
-El primer script está diseñado para SQL Server y utiliza separadores `GO`. Puede abrirse
-desde SQL Server Management Studio o Visual Studio y debe ejecutarse con un usuario que
-tenga permiso para crear bases de datos.
-
-Los archivos se guardan en UTF-8. Las interfaces gráficas modernas detectan esta
-codificación automáticamente. Si se utiliza `sqlcmd`, debe indicarse `-f 65001` para que
-los textos con tildes se interpreten correctamente.
-
-Antes de ejecutarlo se debe comprobar que no exista otra base importante con el nombre
-`FinanzasPersonales`.
+Las cuentas actuales conservan un saldo que los servicios ajustan al crear, editar y eliminar movimientos. No se distribuyen backups ni credenciales de usuarios en el repositorio.

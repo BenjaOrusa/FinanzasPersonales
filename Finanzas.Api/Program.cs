@@ -1,5 +1,6 @@
 using Finanzas.Api;
 using Finanzas.Application.Interfaces;
+using Finanzas.Api.BackgroundServices;
 using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.ExternalServices;
@@ -53,6 +54,22 @@ builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 // Cotizaciones / Equivalencias
 builder.Services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
 builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddOptions<DollarQuoteRefreshSettings>()
+    .Bind(builder.Configuration.GetSection(DollarQuoteRefreshSettings.SectionName))
+    .Validate(settings => settings.IntervalMinutes is >= 1 and <= 1440,
+        "DollarQuoteRefresh:IntervalMinutes debe estar entre 1 y 1440.")
+    .ValidateOnStart();
+builder.Services.AddHostedService<DollarQuoteRefreshWorker>();
+
+builder.Services.Configure<DollarApiSettings>(builder.Configuration.GetSection(DollarApiSettings.SectionName));
+var dollarApiSettings = builder.Configuration.GetSection(DollarApiSettings.SectionName).Get<DollarApiSettings>()
+    ?? throw new InvalidOperationException("Falta la sección DollarApi.");
+builder.Services.AddHttpClient<IDollarQuoteProvider, DollarApiQuoteProvider>(client =>
+{
+    client.BaseAddress = new Uri(dollarApiSettings.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 builder.Services.AddScoped<IFinancialSummaryService, FinancialSummaryService>();
 
