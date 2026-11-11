@@ -4,10 +4,10 @@ API para administrar cuentas, categorías y movimientos por usuario, consultar s
 
 ## Versión para evaluar
 
-La versión de esta entrega está en la rama **`benjamin.orusa`**. Incluye DolarApi, actualización automática y pruebas. La demostración funcional se realiza desde Swagger. El frontend está en desarrollo: todavía no tiene login ni envío de JWT.
+**`main` es la rama de versiones y de entrega.** Los cambios se integran primero en **`desarrollo`** y luego se pasan a `main` para publicar una versión. La API incluye DolarApi, actualización automática y pruebas. La demostración funcional se realiza desde Swagger. El frontend está en desarrollo: todavía no tiene login ni envío de JWT.
 
 ```powershell
-git clone --branch benjamin.orusa https://github.com/BenjaOrusa/FinanzasPersonales.git
+git clone --branch main https://github.com/BenjaOrusa/FinanzasPersonales.git
 cd FinanzasPersonales
 ```
 
