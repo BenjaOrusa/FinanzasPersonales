@@ -18,17 +18,71 @@ namespace Finanzas.Application.Services
         private readonly IMovementRepository movementRepository;
         private readonly ICurrencyRepository currencyRepository;
         private readonly IUserService userService;
+        private readonly IDollarQuoteProvider dollarQuoteProvider;
+        private const string DollarDescription = "Dólar Estadounidense";
+        private const string PesoDescription = "Pesos Argentinos";
+        // Evita que el endpoint y la tarea automática creen la misma fila a la vez
+        // dentro de una instancia de la API.
+        private static readonly SemaphoreSlim ImportGate = new(1, 1);
+        private static readonly TimeZoneInfo ArgentinaTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
 
         public ExchangeRateService(
             IExchangeRateRepository exchangeRateRepository,
             IMovementRepository movementRepository,
             ICurrencyRepository currencyRepository,
-            IUserService userService)
+            IUserService userService,
+            IDollarQuoteProvider dollarQuoteProvider)
         {
             this.exchangeRateRepository = exchangeRateRepository;
             this.movementRepository = movementRepository;
             this.currencyRepository = currencyRepository;
             this.userService = userService;
+            this.dollarQuoteProvider = dollarQuoteProvider;
+        }
+
+        public async Task<ImportedDollarQuoteResponseDTO> ImportLatestDollarAsync(CancellationToken cancellationToken)
+        {
+            await ImportGate.WaitAsync(cancellationToken);
+            try
+            {
+                return await ImportLatestDollarCoreAsync(cancellationToken);
+            }
+            finally
+            {
+                ImportGate.Release();
+            }
+        }
+
+        private async Task<ImportedDollarQuoteResponseDTO> ImportLatestDollarCoreAsync(CancellationToken cancellationToken)
+        {
+            // Consultar primero: si falla el proveedor no se alteran los datos locales.
+            var quote = await dollarQuoteProvider.GetLatestAsync(cancellationToken);
+            var quoteDate = TimeZoneInfo.ConvertTime(quote.UpdatedAt, ArgentinaTimeZone).Date;
+            var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, ArgentinaTimeZone).Date;
+            var currencies = await currencyRepository.GetAllAsync(cancellationToken);
+
+            Currency ResolveCurrency(string description)
+            {
+                var currency = currencies.FirstOrDefault(c => c.Description == description);
+                if (currency is not null) return currency;
+                currency = new Currency(description);
+                currencyRepository.Add(currency);
+                return currency;
+            }
+
+            var dollar = ResolveCurrency(DollarDescription);
+            var peso = ResolveCurrency(PesoDescription);
+            // El mismo DbContext scoped guarda monedas y cotización en una transacción.
+            var saved = await UpsertAsync(new ExchangeRateRequestDTO
+            {
+                BaseCurrencyId = dollar.Id,
+                TargetCurrencyId = peso.Id,
+                Date = quoteDate,
+                Value = quote.PesosPerDollar
+            }, cancellationToken);
+
+            return new ImportedDollarQuoteResponseDTO(saved, quote.UpdatedAt, quoteDate < today);
         }
 
         //CU19  Supervisar la disponibilidad de las cotizaciones
@@ -73,9 +127,9 @@ namespace Finanzas.Application.Services
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
             var movements = await movementRepository.GetAllByUserIdAsync(user.Id, cancellationToken);
 
-            // Identificar la moneda Dólar (asumiendo que su descripción contiene 'Dólar')
+            // Usar la misma moneda canónica que registra la importación.
             var currencies = await currencyRepository.GetAllAsync(cancellationToken);
-            var dollarCurrency = currencies.FirstOrDefault(c => c.Description.Contains("Dólar", StringComparison.OrdinalIgnoreCase));
+            var dollarCurrency = currencies.FirstOrDefault(c => c.Description == DollarDescription);
 
             Guid dollarId = dollarCurrency?.Id ?? Guid.Empty;
 
@@ -101,13 +155,13 @@ namespace Finanzas.Application.Services
                 }
 
                 // Buscar cotización exacta para la fecha del movimiento
-                var rate = await exchangeRateRepository.GetByCompositeKeyAsync(m.CurrencyId, dollarId, m.Date, cancellationToken);
+                var rate = dollarId == Guid.Empty ? null : await exchangeRateRepository.GetByCompositeKeyAsync(dollarId, m.CurrencyId, m.Date, cancellationToken);
                 DateTime? rateDateUsed = rate?.Date;
 
                 // Alternativa 3.b del CU16: Buscar la última cotización anterior disponible
                 if (rate is null && dollarId != Guid.Empty)
                 {
-                    rate = await exchangeRateRepository.GetLatestPriorAsync(m.CurrencyId, dollarId, m.Date, cancellationToken);
+                    rate = await exchangeRateRepository.GetLatestPriorAsync(dollarId, m.CurrencyId, m.Date, cancellationToken);
                     rateDateUsed = rate?.Date;
                 }
 
@@ -120,7 +174,7 @@ namespace Finanzas.Application.Services
                         Description = m.Description,
                         OriginalAmount = m.Amount,
                         OriginalCurrency = m.Currency?.Description ?? string.Empty,
-                        EquivalentInDollars = m.Amount, // Conserva visible el importe original
+                        EquivalentInDollars = null,
                         MovementDate = m.Date,
                         ExchangeRateDateUsed = null,
                         Status = "Sin cotización aplicable"
@@ -128,7 +182,7 @@ namespace Finanzas.Application.Services
                 }
                 else
                 {
-                    decimal equivalent = m.Amount * rate.Value;
+                    decimal equivalent = decimal.Round(m.Amount / rate.Value, 2, MidpointRounding.AwayFromZero);
                     results.Add(new MovementDollarEquivalentResponseDTO
                     {
                         MovementId = m.MovementId,
@@ -138,7 +192,9 @@ namespace Finanzas.Application.Services
                         EquivalentInDollars = equivalent,
                         MovementDate = m.Date,
                         ExchangeRateDateUsed = rateDateUsed,
-                        Status = "Convertido"
+                        Status = rateDateUsed?.Date == m.Date.Date
+                            ? "Convertido"
+                            : "Convertido con última cotización anterior"
                     });
                 }
             }

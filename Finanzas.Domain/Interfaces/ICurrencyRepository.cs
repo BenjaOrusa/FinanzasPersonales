@@ -7,6 +7,7 @@ namespace Finanzas.Domain.Interfaces
 {
     public interface ICurrencyRepository
     {
+        void Add(Currency currency);
         Task<IReadOnlyList<Currency>> GetAllAsync(CancellationToken cancellationToken);
     }
 }

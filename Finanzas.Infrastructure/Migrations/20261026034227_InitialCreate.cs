@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,63 +12,63 @@ namespace Finanzas.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Movimientos_Categorias",
+                name: "FK_Movements_Categories",
                 table: "Movements");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Movimientos_Cuentas",
+                name: "FK_Movements_Accounts",
                 table: "Movements");
 
             migrationBuilder.DropPrimaryKey(
-                name: "PK_Movimientos",
+                name: "PK_Movements",
                 table: "Movements");
 
             migrationBuilder.DropIndex(
-                name: "IX_Movimientos_TipoMovimiento_Fecha",
+                name: "IX_Movements_MovementType_Date",
                 table: "Movements");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Movimientos_Descripcion",
+                name: "CK_Movements_Description",
                 table: "Movements");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Movimientos_Importe",
+                name: "CK_Movements_Amount",
                 table: "Movements");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Movimientos_TipoMovimiento",
+                name: "CK_Movements_MovementType",
                 table: "Movements");
 
             migrationBuilder.DropPrimaryKey(
-                name: "PK_Categorias",
+                name: "PK_Categories",
                 table: "Categories");
 
             migrationBuilder.DropIndex(
-                name: "UQ_Categorias_Descripcion_TipoCategoria",
+                name: "UQ_Categories_Description_CategoryType",
                 table: "Categories");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Categorias_Descripcion",
+                name: "CK_Categories_Description",
                 table: "Categories");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Categorias_TipoCategoria",
+                name: "CK_Categories_CategoryType",
                 table: "Categories");
 
             migrationBuilder.DropPrimaryKey(
-                name: "PK_Cuentas",
+                name: "PK_Accounts",
                 table: "Accounts");
 
             migrationBuilder.DropIndex(
-                name: "UQ_Cuentas_Descripcion",
+                name: "UQ_Accounts_Description",
                 table: "Accounts");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Cuentas_Descripcion",
+                name: "CK_Accounts_Description",
                 table: "Accounts");
 
             migrationBuilder.DropCheckConstraint(
-                name: "CK_Cuentas_TipoCuenta",
+                name: "CK_Accounts_AccountType",
                 table: "Accounts");
 
             migrationBuilder.DropColumn(
@@ -78,21 +78,6 @@ namespace Finanzas.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "AdditionalInformation",
                 table: "Movements");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Movimientos_ID_Cuenta",
-                table: "Movements",
-                newName: "IX_Movements_AccountId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Movimientos_ID_Categoria",
-                table: "Movements",
-                newName: "IX_Movements_CategoryId");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Movimientos_Fecha",
-                table: "Movements",
-                newName: "IX_Movements_Date");
 
             migrationBuilder.AddColumn<string>(
                 name: "Status",
@@ -484,21 +469,6 @@ namespace Finanzas.Infrastructure.Migrations
                 name: "UserId",
                 table: "Accounts");
 
-            migrationBuilder.RenameIndex(
-                name: "IX_Movements_Date",
-                table: "Movements",
-                newName: "IX_Movimientos_Fecha");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Movements_CategoryId",
-                table: "Movements",
-                newName: "IX_Movimientos_ID_Categoria");
-
-            migrationBuilder.RenameIndex(
-                name: "IX_Movements_AccountId",
-                table: "Movements",
-                newName: "IX_Movimientos_ID_Cuenta");
-
             migrationBuilder.AddColumn<bool>(
                 name: "Active",
                 table: "Users",
@@ -524,81 +494,81 @@ namespace Finanzas.Infrastructure.Migrations
                 nullable: true);
 
             migrationBuilder.AddPrimaryKey(
-                name: "PK_Movimientos",
+                name: "PK_Movements",
                 table: "Movements",
                 column: "MovementId");
 
             migrationBuilder.AddPrimaryKey(
-                name: "PK_Categorias",
+                name: "PK_Categories",
                 table: "Categories",
                 column: "CategoryId");
 
             migrationBuilder.AddPrimaryKey(
-                name: "PK_Cuentas",
+                name: "PK_Accounts",
                 table: "Accounts",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Movimientos_TipoMovimiento_Fecha",
+                name: "IX_Movements_MovementType_Date",
                 table: "Movements",
                 columns: new[] { "MovementType", "Date" });
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Movimientos_Descripcion",
+                name: "CK_Movements_Description",
                 table: "Movements",
                 sql: "LEN(LTRIM(RTRIM(Description))) > 0");
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Movimientos_Importe",
+                name: "CK_Movements_Amount",
                 table: "Movements",
                 sql: "Amount > 0");
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Movimientos_TipoMovimiento",
+                name: "CK_Movements_MovementType",
                 table: "Movements",
                 sql: "MovementType IN ('Ingreso', 'Gasto')");
 
             migrationBuilder.CreateIndex(
-                name: "UQ_Categorias_Descripcion_TipoCategoria",
+                name: "UQ_Categories_Description_CategoryType",
                 table: "Categories",
                 columns: new[] { "Description", "CategoryType" },
                 unique: true);
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Categorias_Descripcion",
+                name: "CK_Categories_Description",
                 table: "Categories",
                 sql: "LEN(LTRIM(RTRIM(Description))) > 0");
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Categorias_TipoCategoria",
+                name: "CK_Categories_CategoryType",
                 table: "Categories",
                 sql: "CategoryType IN ('Ingreso', 'Gasto')");
 
             migrationBuilder.CreateIndex(
-                name: "UQ_Cuentas_Descripcion",
+                name: "UQ_Accounts_Description",
                 table: "Accounts",
                 column: "Description",
                 unique: true);
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Cuentas_Descripcion",
+                name: "CK_Accounts_Description",
                 table: "Accounts",
                 sql: "LEN(LTRIM(RTRIM(Description))) > 0");
 
             migrationBuilder.AddCheckConstraint(
-                name: "CK_Cuentas_TipoCuenta",
+                name: "CK_Accounts_AccountType",
                 table: "Accounts",
                 sql: "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Movimientos_Categorias",
+                name: "FK_Movements_Categories",
                 table: "Movements",
                 column: "CategoryId",
                 principalTable: "Categories",
                 principalColumn: "CategoryId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Movimientos_Cuentas",
+                name: "FK_Movements_Accounts",
                 table: "Movements",
                 column: "AccountId",
                 principalTable: "Accounts",

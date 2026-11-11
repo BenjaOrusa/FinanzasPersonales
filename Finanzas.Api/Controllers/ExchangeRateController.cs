@@ -2,6 +2,7 @@
 using Finanzas.Application.DTOs.Response.ExchangeRate;
 using Finanzas.Application.DTOs.Response.ExchangeRates;
 using Finanzas.Application.Interfaces;
+using Finanzas.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -20,6 +21,20 @@ namespace Finanzas.Api.Controllers
         public ExchangeRateController(IExchangeRateService exchangeRateService)
         {
             this.exchangeRateService = exchangeRateService;
+        }
+
+        [Authorize(Policy = Policies.AdminsOnly)]
+        [HttpPost("import-latest-dollar")]
+        public async Task<ActionResult<ImportedDollarQuoteResponseDTO>> ImportLatestDollar(CancellationToken cancellationToken)
+        {
+            try
+            {
+                return Ok(await exchangeRateService.ImportLatestDollarAsync(cancellationToken));
+            }
+            catch (QuoteProviderException ex)
+            {
+                return Problem(statusCode: StatusCodes.Status502BadGateway, title: "No se pudo importar la cotización", detail: ex.Message);
+            }
         }
 
         // CU19: Exclusivo para administradores - Supervisar / Registrar cotizaciones

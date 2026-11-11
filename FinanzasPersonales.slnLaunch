@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Finanzas - API y Web",
+    "Projects": [
+      {
+        "Path": "Finanzas.Api\\Finanzas.Presentation.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "finanzas.web\\finanzas.web.esproj",
+        "Action": "Start",
+        "DebugTarget": "localhost (Chrome)"
+      }
+    ]
+  }
+]

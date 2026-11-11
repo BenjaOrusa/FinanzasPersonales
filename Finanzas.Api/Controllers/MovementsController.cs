@@ -21,15 +21,6 @@ namespace Finanzas.Api.Controllers
         }
 
 
-        [HttpGet]
-        [ProducesResponseType(typeof(IReadOnlyList<MovementResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<MovementResponseDTO>>> GetAll(CancellationToken cancellationToken)
-        {
-            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
-            var movements = await movementService.GetAllAsync(userEmail, cancellationToken);
-            return Ok(movements);
-        }
-
         [HttpGet("{movementId:Guid}")]
         [ProducesResponseType(typeof(MovementResponseDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
