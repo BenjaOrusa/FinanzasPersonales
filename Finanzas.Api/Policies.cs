@@ -4,5 +4,7 @@
     {
         public const string AdminsOnly = "AdminsOnly";
         public const string StandardUsers = "StandardUsers";
+
+        public const string AllUsers = "AllUsers";
     }
 }
