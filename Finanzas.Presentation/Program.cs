@@ -1,6 +1,6 @@
 using Finanzas.Api;
-using Finanzas.Application.Interfaces;
 using Finanzas.Api.BackgroundServices;
+using Finanzas.Application.Interfaces;
 using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.ExternalServices;
@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -114,7 +115,10 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     });
 

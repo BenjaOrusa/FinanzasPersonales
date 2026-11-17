@@ -11,7 +11,7 @@ env:
   AZURE_WEBAPP_NAME: finanzaspersonales-api     # El nombre exacto de tu App Service en Azure
   DOTNET_VERSION: '10.0.x'                      # Versión de .NET que usas
   SOLUTION: FinanzasPersonales.slnx             # Nombre de tu solución 
-  STARTUP_PROJECT: Finanzas.Api/Finanzas.Presentation.csproj
+  STARTUP_PROJECT: Finanzas.Presentation/Finanzas.Presentation.csproj
   MIGRATIONS_PROJECT: Finanzas.Infrastructure/Finanzas.Infrastructure.csproj # Proyecto donde están las migraciones
 
 jobs:
