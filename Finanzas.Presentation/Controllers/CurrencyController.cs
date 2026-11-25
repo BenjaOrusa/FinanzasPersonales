@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace Finanzas.Api.Controllers
 {
-    [Authorize(Policy = Policies.StandardUsers)]
+    // Catálogo de monedas: lo consultan tanto el usuario común (crear cuentas) como el administrador (cargar cotizaciones)
+    [Authorize(Policy = Policies.AllUsers)]
     [ApiController]
     [Route("api/[controller]")]
     public class CurrencyController : ControllerBase

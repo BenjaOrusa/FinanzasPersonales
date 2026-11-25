@@ -23,16 +23,19 @@ namespace Finanzas.Application.Services
             this.userService = userService;
         }
 
-        public async Task<FinancialSummaryResponseDTO> GetSummaryAsync(string userEmail, CancellationToken cancellationToken)
+        public async Task<FinancialSummaryResponseDTO> GetSummaryAsync(string userEmail, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
         {
+            if (startDate.HasValue && endDate.HasValue && startDate.Value.Date > endDate.Value.Date)
+                throw new ArgumentException("La fecha desde no puede ser posterior a la fecha hasta.");
+
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
 
-            // Obtener todos los movimientos propios del usuario
+            // Obtener los movimientos propios del usuario dentro del período indicado (o todo el historial si no hay fechas)
             var movements = await movementRepository.GetFilteredByUserIdAsync(
                 userId: user.Id,
                 movementType: null,
-                startDate: null,
-                endDate: null,
+                startDate: startDate,
+                endDate: endDate,
                 accountId: null,
                 categoryId: null,
                 cancellationToken: cancellationToken);

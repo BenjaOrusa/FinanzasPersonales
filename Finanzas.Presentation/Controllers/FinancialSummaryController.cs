@@ -20,15 +20,23 @@ namespace Finanzas.Api.Controllers
             this.financialSummaryService = financialSummaryService;
         }
 
-        // CU15: Consultar el resumen financiero (totales de ingresos, gastos y balance por moneda)
+        // CU15: Consultar el resumen financiero (totales de ingresos, gastos y balance por moneda).
+        // Filtro opcional por período: ?startDate=2026-11-01&endDate=2026-11-30 (sin parámetros = todo el historial).
         [HttpGet]
-        public async Task<ActionResult<FinancialSummaryResponseDTO>> GetSummary(CancellationToken cancellationToken)
+        public async Task<ActionResult<FinancialSummaryResponseDTO>> GetSummary(
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate,
+            CancellationToken cancellationToken)
         {
             try
             {
                 var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
-                var summary = await financialSummaryService.GetSummaryAsync(userEmail, cancellationToken);
+                var summary = await financialSummaryService.GetSummaryAsync(userEmail, startDate, endDate, cancellationToken);
                 return Ok(summary);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (UnauthorizedAccessException ex)
             {
