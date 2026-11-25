@@ -67,7 +67,7 @@ namespace Finanzas.Infrastructure.Migrations
 
                     b.ToTable("Accounts", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
+                            t.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'Cuenta Bancaria', 'Billetera Virtual')");
 
                             t.HasCheckConstraint("CK_Accounts_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
                         });

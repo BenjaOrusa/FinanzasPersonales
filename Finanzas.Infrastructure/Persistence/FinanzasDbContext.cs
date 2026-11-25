@@ -101,7 +101,7 @@ public class FinanzasDbContext(DbContextOptions<FinanzasDbContext> options)
         account.ToTable("Accounts", tabla =>
         {
             tabla.HasCheckConstraint("CK_Accounts_Description", "LEN(LTRIM(RTRIM(Description))) > 0");
-            tabla.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'CuentaBancaria', 'BilleteraVirtual')");
+            tabla.HasCheckConstraint("CK_Accounts_AccountType", "AccountType IN ('Efectivo', 'Cuenta Bancaria', 'Billetera Virtual')");
         });
 
         account.HasKey(item => item.AccountId)

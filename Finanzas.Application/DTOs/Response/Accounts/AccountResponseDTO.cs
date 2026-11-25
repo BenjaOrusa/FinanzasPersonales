@@ -11,5 +11,7 @@ public class AccountResponseDTO
     public decimal Balance { get; set; }
 
     public Guid CurrencyId { get; set; }
+
+    public string CurrencyDescription { get; set; } = string.Empty;
 }
 

@@ -23,11 +23,11 @@ public class AccountController : ControllerBase
 
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AccountResponseDTO>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<AccountResponseDTO>>> GetAllActive([FromQuery] bool active, CancellationToken cancellationToken)
     {
         var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
 
-        var accounts = await accountService.GetAllAsync(userEmail, cancellationToken);
+        var accounts = await accountService.GetAllAsync(userEmail, active, cancellationToken);
         return Ok(accounts);
     }
 
@@ -35,27 +35,19 @@ public class AccountController : ControllerBase
 
     //CU04 — Crear una cuenta financiera
     [HttpPost]
-    public async Task<ActionResult<AccountResponseDTO>> Create([FromBody] AccountRequestDTO accountRequest, CancellationToken cancellationToken)
+    public async Task<ActionResult<AccountResponseDTO>> Create(
+        [FromBody] AccountRequestDTO accountRequest, CancellationToken cancellationToken)
     {
         try
         {
             var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
-
             var response = await accountService.CreateAsync(userEmail, accountRequest, cancellationToken);
-            return CreatedAtAction(nameof(GetAll), new { id = response.AccountId }, response);
+
+            return CreatedAtAction(nameof(GetById), new { accountId = response.AccountId }, response);
         }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(ex.Message);
-        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (InvalidOperationException ex) { return Conflict(ex.Message); }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(ex.Message); }
     }
 
 

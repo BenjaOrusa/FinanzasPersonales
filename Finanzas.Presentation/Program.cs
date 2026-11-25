@@ -1,5 +1,6 @@
-using Finanzas.Application.Interfaces;
+using Finanzas.Api;
 using Finanzas.Api.BackgroundServices;
+using Finanzas.Application.Interfaces;
 using Finanzas.Application.Services;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.ExternalServices;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -125,7 +127,10 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
@@ -133,8 +138,9 @@ builder.Services
 // CONFIGURACIÓN DE POLÍTICAS DE AUTORIZACIÓN (POLICIES)
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminsOnly", policy => policy.RequireRole("Administrator"));
-    options.AddPolicy("StandardUsers", policy => policy.RequireRole("Administrator", "Customer"));
+    options.AddPolicy(Policies.AdminsOnly, policy => policy.RequireRole("Administrator"));
+    options.AddPolicy(Policies.StandardUsers, policy => policy.RequireRole("Customer"));
+    options.AddPolicy(Policies.AllUsers, p => p.RequireRole("Administrator", "Customer"));
 });
 
 builder.Services.AddControllers()
@@ -217,10 +223,15 @@ static async Task VerificarConexionAsync(
     await using var scope = services.CreateAsyncScope();
     var context = scope.ServiceProvider.GetRequiredService<FinanzasDbContext>();
 
-    if (!await context.Database.CanConnectAsync())
+    try
+    {
+        await context.Database.OpenConnectionAsync();
+        await context.Database.CloseConnectionAsync();
+    }
+    catch (Exception ex)
     {
         throw new InvalidOperationException(
-            "No fue posible conectar con la base FinanzasPersonales.");
+            "No fue posible conectar con la base FinanzasPersonales: " + ex.Message, ex);
     }
 
     logger.LogInformation(
