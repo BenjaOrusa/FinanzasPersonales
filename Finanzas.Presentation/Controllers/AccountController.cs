@@ -1,10 +1,8 @@
 using Finanzas.Application.DTOs.Request.Accounts;
 using Finanzas.Application.DTOs.Response.Accounts;
 using Finanzas.Application.Interfaces;
-using Finanzas.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Finanzas.Api.Controllers;
 
@@ -16,9 +14,9 @@ public class AccountController : ControllerBase
 {
     private readonly IAccountService accountService;
 
-    public AccountController(IAccountService accountService) 
-    { 
-            this.accountService = accountService;
+    public AccountController(IAccountService accountService)
+    {
+        this.accountService = accountService;
     }
 
 
@@ -100,6 +98,48 @@ public class AccountController : ControllerBase
         }
     }
 
+    // CU06 (complemento): Reactivar una cuenta desactivada
+    [HttpPatch("{accountId:Guid}/activate")]
+    public async Task<IActionResult> Activate(Guid accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var success = await accountService.ActivateAsync(userEmail, accountId, cancellationToken);
+
+            if (!success) return NotFound();
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
+
+    // Eliminar físicamente una cuenta SIN movimientos (409 si tiene movimientos)
+    [HttpDelete("{accountId:Guid}")]
+    public async Task<IActionResult> Delete(Guid accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+            var success = await accountService.DeleteAsync(userEmail, accountId, cancellationToken);
+
+            if (!success) return NotFound();
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
+
     // CU07: Consultar saldo y detalles de una cuenta específica del usuario
     [HttpGet("{accountId:Guid}")]
     public async Task<ActionResult<AccountResponseDTO>> GetById(Guid accountId, CancellationToken cancellationToken)
@@ -119,4 +159,3 @@ public class AccountController : ControllerBase
         }
     }
 }
-

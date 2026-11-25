@@ -12,5 +12,7 @@ namespace Finanzas.Application.Interfaces
         Task<CategoryResponseDTO> CreateAsync(string userEmail, CategoryRequestDTO request, CancellationToken cancellationToken);
         Task<CategoryResponseDTO> UpdateAsync(string userEmail, Guid categoryId, CategoryRequestDTO request, CancellationToken cancellationToken);
         Task<bool> DeactivateAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken);
+        Task<bool> ActivateAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken);
+        Task<bool> DeleteAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken);
     }
 }
