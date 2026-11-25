@@ -113,6 +113,41 @@ namespace Finanzas.Application.Services
 
             return true;
         }
+        // Reactiva una categoría que fue desactivada (CU10 en sentido inverso)
+        public async Task<bool> ActivateAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var category = await categoryRepository.GetByIdAndUserIdAsync(categoryId, user.Id, cancellationToken);
+
+            if (category is null) return false;
+
+            category.Activate();
+
+            await categoryRepository.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
+        // Eliminación física: solo permitida si la categoría no tiene movimientos (no se pierde historial).
+        public async Task<bool> DeleteAsync(string userEmail, Guid categoryId, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var category = await categoryRepository.GetByIdAndUserIdAsync(categoryId, user.Id, cancellationToken);
+
+            if (category is null) return false;
+
+            if (await categoryRepository.HasMovementsAsync(categoryId, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "No se puede eliminar una categoría que tiene movimientos asociados. Desactívela para conservar su historial.");
+            }
+
+            categoryRepository.Remove(category);
+            await categoryRepository.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
         private static CategoryResponseDTO MapToResponseDTO(Category category) => new()
         {
             CategoryId = category.CategoryId,

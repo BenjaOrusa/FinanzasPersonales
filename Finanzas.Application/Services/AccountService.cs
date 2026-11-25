@@ -24,10 +24,10 @@ namespace Finanzas.Application.Services
 
 
 
-        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail,bool active, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<AccountResponseDTO>> GetAllAsync(string userEmail, bool active, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
-            var accounts = await accountRepository.GetAllByUserIdAsync(user.Id,active, cancellationToken);
+            var accounts = await accountRepository.GetAllByUserIdAsync(user.Id, active, cancellationToken);
 
             return accounts.Select(a => MapToResponseDTO(a, a.Currency.Description)).ToList();
         }
@@ -45,7 +45,8 @@ namespace Finanzas.Application.Services
             var user = await userService.GetValidUserAsync(userEmail, ct);
             var description = request.Description.Trim();
 
-            if (description.Length is 0 or > 100 || request.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
+            // El tipo se normaliza a la forma que exige el CHECK de SQL Server ('Cuenta Bancaria', 'Billetera Virtual').
+            if (description.Length is 0 or > 100 || !AccountTypes.TryNormalize(request.AccountType, out var accountType))
                 throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
 
             var currency = await GetValidCurrencyAsync(request.CurrencyId, ct);
@@ -53,7 +54,7 @@ namespace Finanzas.Application.Services
             if (await accountRepository.ExistsByDescriptionAndUserAsync(description, user.Id, ct))
                 throw new InvalidOperationException("Ya existe una cuenta con esa descripción para este usuario.");
 
-            var account = new Account(description, request.AccountType, user.Id, currency.Id);
+            var account = new Account(description, accountType, user.Id, currency.Id);
             accountRepository.Add(account);
             await accountRepository.SaveChangesAsync(ct);
 
@@ -75,6 +76,41 @@ namespace Finanzas.Application.Services
             return true;
         }
 
+        // Reactiva una cuenta que fue desactivada (CU06 en sentido inverso)
+        public async Task<bool> ActivateAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
+
+            if (account is null) return false;
+
+            account.Activate();
+
+            await accountRepository.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
+        // Eliminación física: solo permitida si la cuenta no tiene movimientos (no se pierde historial).
+        public async Task<bool> DeleteAsync(string userEmail, Guid accountId, CancellationToken cancellationToken)
+        {
+            var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
+            var account = await accountRepository.GetByIdAndUserIdAsync(accountId, user.Id, cancellationToken);
+
+            if (account is null) return false;
+
+            if (await accountRepository.HasMovementsAsync(accountId, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "No se puede eliminar una cuenta que tiene movimientos asociados. Desactívela para conservar su historial.");
+            }
+
+            accountRepository.Remove(account);
+            await accountRepository.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+
         public async Task<AccountResponseDTO> UpdateAsync(string userEmail, Guid accountId, AccountRequestDTO request, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);
@@ -85,7 +121,7 @@ namespace Finanzas.Application.Services
 
             var description = request.Description.Trim();
 
-            if (description.Length is 0 or > 100 || request.AccountType is not ("Efectivo" or "CuentaBancaria" or "BilleteraVirtual"))
+            if (description.Length is 0 or > 100 || !AccountTypes.TryNormalize(request.AccountType, out var accountType))
             {
                 throw new ArgumentException("La descripción y el tipo de cuenta no son válidos.");
             }
@@ -109,7 +145,7 @@ namespace Finanzas.Application.Services
             }
 
             // Actualizar mediante el método de dominio controlado
-            account.Update(description, request.AccountType, currency.Id);
+            account.Update(description, accountType, currency.Id);
 
             await accountRepository.SaveChangesAsync(cancellationToken);
 
@@ -138,4 +174,3 @@ namespace Finanzas.Application.Services
     }
 
 }
-
