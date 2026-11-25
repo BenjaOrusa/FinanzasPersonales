@@ -1,5 +1,4 @@
 <Solution>
-  <Folder Name="/Finanzas.Api/" />
   <Project Path="Finanzas.Api/Finanzas.Presentation.csproj" />
   <Project Path="Finanzas.Application/Finanzas.Application.csproj" Id="850a9862-fc30-410f-9fd0-dcd2f7bd3f07" />
   <Project Path="Finanzas.Domain/Finanzas.Domain.csproj" Id="4c54d34b-ac9c-4a3f-8a33-40ef50a3012a" />

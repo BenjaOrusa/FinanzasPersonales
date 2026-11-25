@@ -62,9 +62,12 @@ namespace Finanzas.Application.Services
             var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, ArgentinaTimeZone).Date;
             var currencies = await currencyRepository.GetAllAsync(cancellationToken);
 
+            // Recuperar moneda por descripción o crearla si no existe, para mantener consistencia en la base de datos.
             Currency ResolveCurrency(string description)
             {
+                // Buscar moneda por descripción en la lista de monedas obtenida previamente desde la base de datos.
                 var currency = currencies.FirstOrDefault(c => c.Description == description);
+                // si existe, devolver la moneda encontrada en la lista de monedas
                 if (currency is not null) return currency;
                 currency = new Currency(description);
                 currencyRepository.Add(currency);
@@ -73,6 +76,7 @@ namespace Finanzas.Application.Services
 
             var dollar = ResolveCurrency(DollarDescription);
             var peso = ResolveCurrency(PesoDescription);
+
             // El mismo DbContext scoped guarda monedas y cotización en una transacción.
             var saved = await UpsertAsync(new ExchangeRateRequestDTO
             {
@@ -88,26 +92,32 @@ namespace Finanzas.Application.Services
         //CU19  Supervisar la disponibilidad de las cotizaciones
         public async Task<ExchangeRateResponseDTO> UpsertAsync(ExchangeRateRequestDTO request, CancellationToken cancellationToken)
         {
+            // Valida que el valor sea mayor a 0
             if (request.Value <= 0)
                 throw new ArgumentException("El valor de la cotización debe ser mayor a cero.");
 
+            // buscar cotización existente por clave compuesta (base, destino, fecha)
             var existingRate = await exchangeRateRepository.GetByCompositeKeyAsync(
                 request.BaseCurrencyId, request.TargetCurrencyId, request.Date, cancellationToken);
 
+            // si no existe, crear una nueva cotización
             ExchangeRate exchangeRate;
             if (existingRate is null)
             {
                 exchangeRate = new ExchangeRate(request.BaseCurrencyId, request.TargetCurrencyId, request.Date, request.Value);
                 exchangeRateRepository.Add(exchangeRate);
             }
+            // si existe, actualizar el valor
             else
             {
                 existingRate.UpdateValue(request.Value);
                 exchangeRate = existingRate;
             }
 
+            // guardar cambios en la base de datos
             await exchangeRateRepository.SaveChangesAsync(cancellationToken);
 
+            // recuperar la cotización guardada para devolverla en el DTO de respuesta
             var savedRate = await exchangeRateRepository.GetByCompositeKeyAsync(
                 exchangeRate.BaseCurrencyId, exchangeRate.TargetCurrencyId, exchangeRate.Date, cancellationToken);
 

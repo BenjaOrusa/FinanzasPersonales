@@ -61,14 +61,26 @@ builder.Services.AddOptions<DollarQuoteRefreshSettings>()
     .ValidateOnStart();
 builder.Services.AddHostedService<DollarQuoteRefreshWorker>();
 
+
+
+
+// Vincula la configuración de DolarApi con la clase DollarApiSettings
 builder.Services.Configure<DollarApiSettings>(builder.Configuration.GetSection(DollarApiSettings.SectionName));
+
+// Leer esa configuración para usarla en Program
 var dollarApiSettings = builder.Configuration.GetSection(DollarApiSettings.SectionName).Get<DollarApiSettings>()
     ?? throw new InvalidOperationException("Falta la sección DollarApi.");
+
+// Registrar la interfaz del proveedor y su implementación como cliente tipado
 builder.Services.AddHttpClient<IDollarQuoteProvider, DollarApiQuoteProvider>(client =>
 {
     client.BaseAddress = new Uri(dollarApiSettings.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+
+
+
+
 
 builder.Services.AddScoped<IFinancialSummaryService, FinancialSummaryService>();
 

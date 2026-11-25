@@ -8,6 +8,7 @@ namespace Finanzas.Infrastructure.ExternalServices;
 
 public sealed class DollarApiQuoteProvider(HttpClient httpClient) : IDollarQuoteProvider
 {
+    // Asincronamente obtiene dólar desde proveedor externo.
     public async Task<DollarQuote> GetLatestAsync(CancellationToken cancellationToken)
     {
         try
