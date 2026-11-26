@@ -1,0 +1,6 @@
+{
+  "name": "Finanzas Personales",
+  "description": "Aplicación de gestión de finanzas personales para control de ingresos, gastos, categorías y cuentas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
