@@ -71,8 +71,8 @@ export const INITIAL_USERS: Usuario[] = [
     id_usuario: '3',
     nombre: 'Administrador',
     apellido: 'General',
-    correo_electronico: 'admin@finanzas.com',
-    contrasenia: 'Admin123!',
+    correo_electronico: 'admin@email.com',
+    contrasenia: 'Admin123',
     estado: 'Activo',
     id_tipo_usuario: 2,
     tipo_descripcion: 'Administrador',
@@ -111,7 +111,13 @@ export function loadLocalUsers(): Usuario[] {
     const raw = localStorage.getItem(USERS_KEY)
     if (raw) {
       const parsed: Usuario[] = JSON.parse(raw)
-      return parsed.map(normalizeUser)
+      return parsed.map((u) => {
+        const base = normalizeUser(u)
+        if (base.id_usuario === '3' && base.correo_electronico === 'admin@finanzas.com') {
+          return { ...base, correo_electronico: 'admin@email.com', contrasenia: 'Admin123' }
+        }
+        return base
+      })
     }
   } catch (e) {
     console.error(e)

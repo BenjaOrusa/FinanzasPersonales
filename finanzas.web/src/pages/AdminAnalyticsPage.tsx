@@ -1729,106 +1729,102 @@ export default function AdminAnalyticsPage() {
       )}
 
       {/* ============================================================== */}
-      {/* SECCIÓN 4: REGISTRO DE MOVIMIENTOS DETALLADOS                  */}
+      {/* SECCIÓN 4: REGISTRO DE MOVIMIENTOS DETALLADOS (MODO LOCAL)     */}
       {/* ============================================================== */}
-      <section className="analytics-section">
-        <div className="section-title-row">
-          <div>
-            <h2 className="section-title">Movimientos Registrados en el Período</h2>
-            <p className="section-subtitle">
-              Auditoría de operaciones con cotización histórica aplicada al momento de cada movimiento (CU16/CU19).
-            </p>
+      {!isApiMode && (
+        <section className="analytics-section">
+          <div className="section-title-row">
+            <div>
+              <h2 className="section-title">Movimientos Registrados en el Período</h2>
+              <p className="section-subtitle">
+                Auditoría de operaciones con cotización histórica aplicada al momento de cada movimiento (CU16/CU19).
+              </p>
+            </div>
           </div>
-        </div>
 
-        {isApiMode ? (
-          <div className="empty-panel">
-            <p>
-              En Modo API, el endpoint administrativo <code>GET /api/Admin/analytics/movements</code> devuelve métricas consolidadas (totales por moneda, evolución diaria, evolución mensual, desglose por categoría y consolidado por usuario) sin exponer filas de movimientos individuales.
-            </p>
-          </div>
-        ) : monthMovements.length === 0 ? (
-          <div className="empty-panel">
-            <p>No hay movimientos registrados para los filtros seleccionados.</p>
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Descripción</th>
-                  <th>Usuario</th>
-                  <th>Categoría</th>
-                  <th>Cuenta</th>
-                  <th>Tipo</th>
-                  <th style={{ textAlign: 'right' }}>Monto ARS</th>
-                  <th style={{ textAlign: 'right' }}>Equivalente USD</th>
-                  <th>Cotización Utilizada</th>
-                </tr>
-              </thead>
-              <tbody>
-                {monthMovements.map((m) => {
-                  const conv = getMovementConvertedAmounts(m)
-                  const userOwner = allUsers.find((u) => u.id_usuario === m.id_usuario)
+          {monthMovements.length === 0 ? (
+            <div className="empty-panel">
+              <p>No hay movimientos registrados para los filtros seleccionados.</p>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Usuario</th>
+                    <th>Categoría</th>
+                    <th>Cuenta</th>
+                    <th>Tipo</th>
+                    <th style={{ textAlign: 'right' }}>Monto ARS</th>
+                    <th style={{ textAlign: 'right' }}>Equivalente USD</th>
+                    <th>Cotización Utilizada</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthMovements.map((m) => {
+                    const conv = getMovementConvertedAmounts(m)
+                    const userOwner = allUsers.find((u) => u.id_usuario === m.id_usuario)
 
-                  return (
-                    <tr key={m.id}>
-                      <td>{m.date}</td>
-                      <td style={{ fontWeight: 600 }}>
-                        {m.description}
-                        {m.note && (
-                          <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>
-                            {m.note}
+                    return (
+                      <tr key={m.id}>
+                        <td>{m.date}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {m.description}
+                          {m.note && (
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>
+                              {m.note}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>
+                            {userOwner ? `${userOwner.nombre} ${userOwner.apellido}` : `ID ${m.id_usuario}`}
                           </span>
-                        )}
-                      </td>
-                      <td>
-                        <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>
-                          {userOwner ? `${userOwner.nombre} ${userOwner.apellido}` : `ID ${m.id_usuario}`}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="table-category-tag">{m.category}</span>
-                      </td>
-                      <td>{m.account}</td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            m.type === 'income' ? 'badge--success' : 'badge--danger'
-                          }`}
+                        </td>
+                        <td>
+                          <span className="table-category-tag">{m.category}</span>
+                        </td>
+                        <td>{m.account}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              m.type === 'income' ? 'badge--success' : 'badge--danger'
+                            }`}
+                          >
+                            {m.type === 'income' ? 'Ingreso' : 'Gasto'}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: m.type === 'income' ? '#16a34a' : '#dc2626',
+                          }}
                         >
-                          {m.type === 'income' ? 'Ingreso' : 'Gasto'}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          textAlign: 'right',
-                          fontWeight: 700,
-                          color: m.type === 'income' ? '#16a34a' : '#dc2626',
-                        }}
-                      >
-                        {m.type === 'income' ? '+' : '-'} {formatArs(conv.ars)}
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 600, color: '#0f172a' }}>
-                        {formatUsd(conv.usd)}
-                      </td>
-                      <td>
-                        <span
-                          className="cotizacion-tag"
-                          title={`Cotización tomada al ${conv.fechaCotizacion}`}
-                        >
-                          $ {conv.cotizacion} ARS ({conv.fechaCotizacion})
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                          {m.type === 'income' ? '+' : '-'} {formatArs(conv.ars)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: '#0f172a' }}>
+                          {formatUsd(conv.usd)}
+                        </td>
+                        <td>
+                          <span
+                            className="cotizacion-tag"
+                            title={`Cotización tomada al ${conv.fechaCotizacion}`}
+                          >
+                            $ {conv.cotizacion} ARS ({conv.fechaCotizacion})
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }
