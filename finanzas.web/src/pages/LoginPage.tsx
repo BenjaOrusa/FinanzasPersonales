@@ -175,7 +175,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="test-account-badge test-account-badge--admin"
-              onClick={() => handleFillCredentials('admin@finanzas.com', 'Admin123!')}
+              onClick={() => handleFillCredentials('admin@email.com', 'Admin123')}
               title="Usuario Administrador con permisos especiales"
             >
               <strong>Administrador</strong>
