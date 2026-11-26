@@ -19,10 +19,17 @@ import {
   Info,
 } from 'lucide-react'
 
+function getTodayLocalDate(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function AdminCotizacionesPage() {
-  const [fechaConsulta, setFechaConsulta] = useState(
-    new Date().toISOString().slice(0, 10)
-  )
+  const hoy = getTodayLocalDate()
+  const [fechaConsulta, setFechaConsulta] = useState(hoy)
   const [monedas, setMonedas] = useState<Moneda[]>([])
   const [idMonedaBase, setIdMonedaBase] = useState('2') // USD
   const [idMonedaCotizada, setIdMonedaCotizada] = useState('1') // ARS
@@ -41,9 +48,7 @@ function AdminCotizacionesPage() {
   } | null>(null)
 
   // Formulario para agregar cotización manual
-  const [nuevaFecha, setNuevaFecha] = useState(
-    new Date().toISOString().slice(0, 10)
-  )
+  const [nuevaFecha, setNuevaFecha] = useState(hoy)
   const [nuevoValor, setNuevoValor] = useState('')
   const [isSavingManual, setIsSavingManual] = useState(false)
 
@@ -113,6 +118,14 @@ function AdminCotizacionesPage() {
 
   function handleConsultarDisponibilidad(e: React.FormEvent) {
     e.preventDefault()
+    const hoyActual = getTodayLocalDate()
+    if (!fechaConsulta || fechaConsulta > hoyActual) {
+      setSyncStatusMsg({
+        text: `No se pueden consultar cotizaciones con fecha futura (máximo permitido: ${hoyActual}).`,
+        type: 'error',
+      })
+      return
+    }
     ejecutarSupervision(fechaConsulta, idMonedaBase, idMonedaCotizada)
   }
 
@@ -147,9 +160,17 @@ function AdminCotizacionesPage() {
   async function handleGuardarManual(e: React.FormEvent) {
     e.preventDefault()
     const val = parseFloat(nuevoValor)
+    const hoyActual = getTodayLocalDate()
     if (isNaN(val) || val <= 0 || !nuevaFecha) {
       setSyncStatusMsg({
         text: 'Ingresá un valor numérico mayor a 0 y una fecha válida.',
+        type: 'error',
+      })
+      return
+    }
+    if (nuevaFecha > hoyActual) {
+      setSyncStatusMsg({
+        text: `No se pueden registrar cotizaciones con fecha futura (máximo permitido: ${hoyActual}).`,
         type: 'error',
       })
       return
@@ -192,11 +213,11 @@ function AdminCotizacionesPage() {
           className="primary-button"
           onClick={handleSincronizarBanco}
           disabled={isSyncingBank}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexShrink: 0 }}
         >
           <RefreshCw
             size={16}
-            style={{ animation: isSyncingBank ? 'spin 1s linear infinite' : 'none' }}
+            style={{ animation: isSyncingBank ? 'spin 1s linear infinite' : 'none', flexShrink: 0 }}
           />
           <span>{isSyncingBank ? 'Sincronizando...' : 'Consultar API Banco en Vivo'}</span>
         </button>
@@ -290,6 +311,7 @@ function AdminCotizacionesPage() {
             <input
               type="date"
               value={fechaConsulta}
+              max={hoy}
               onChange={(e) => setFechaConsulta(e.target.value)}
               required
             />
@@ -399,7 +421,7 @@ function AdminCotizacionesPage() {
                     {resultadoSupervision.mensaje}
                   </p>
 
-                  <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', gap: 16, fontSize: '0.8rem', color: '#64748b' }}>
+                  <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: '0.8rem', color: '#64748b' }}>
                     <span>
                       <strong>Fecha de la cotización:</strong> {resultadoSupervision.fechaCotizacion}
                     </span>
@@ -423,19 +445,20 @@ function AdminCotizacionesPage() {
             <h3 style={{ margin: '0 0 10px', fontSize: '1rem', color: '#0f172a' }}>
               Registrar Nueva Cotización Manual
             </h3>
-            <form onSubmit={handleGuardarManual} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end' }}>
-              <label style={{ flex: '1 1 140px', fontSize: '0.825rem', fontWeight: 600 }}>
+            <form onSubmit={handleGuardarManual} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
+              <label style={{ flex: '1 1 150px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.825rem', fontWeight: 600 }}>
                 Fecha
                 <input
                   type="date"
                   value={nuevaFecha}
+                  max={hoy}
                   onChange={(e) => setNuevaFecha(e.target.value)}
-                  style={{ minHeight: 38, height: 38 }}
+                  style={{ minHeight: 38, height: 38, width: '100%', boxSizing: 'border-box' }}
                   required
                 />
               </label>
 
-              <label style={{ flex: '1 1 140px', fontSize: '0.825rem', fontWeight: 600 }}>
+              <label style={{ flex: '1 1 160px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.825rem', fontWeight: 600 }}>
                 Valor ($ ARS / 1 USD)
                 <input
                   type="number"
@@ -443,7 +466,7 @@ function AdminCotizacionesPage() {
                   placeholder="Ej: 1320.00"
                   value={nuevoValor}
                   onChange={(e) => setNuevoValor(e.target.value)}
-                  style={{ minHeight: 38, height: 38 }}
+                  style={{ minHeight: 38, height: 38, width: '100%', boxSizing: 'border-box' }}
                   required
                 />
               </label>
@@ -452,7 +475,7 @@ function AdminCotizacionesPage() {
                 type="submit"
                 className="secondary-button"
                 disabled={isSavingManual}
-                style={{ minHeight: 38, height: 38, display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ minHeight: 38, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexShrink: 0 }}
               >
                 <PlusCircle size={15} /> Guardar Cotización
               </button>
