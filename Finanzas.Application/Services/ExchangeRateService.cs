@@ -132,6 +132,97 @@ namespace Finanzas.Application.Services
             };
         }
 
+        // Historial de cotizaciones persistidas (solo lectura)
+        public async Task<IReadOnlyList<ExchangeRateResponseDTO>> GetAllAsync(
+            Guid? baseCurrencyId,
+            Guid? targetCurrencyId,
+            DateTime? startDate,
+            DateTime? endDate,
+            CancellationToken cancellationToken)
+        {
+            if (startDate.HasValue && endDate.HasValue && startDate.Value.Date > endDate.Value.Date)
+                throw new ArgumentException("La fecha desde no puede ser posterior a la fecha hasta.");
+
+            var rates = await exchangeRateRepository.GetAllAsync(
+                baseCurrencyId, targetCurrencyId, startDate, endDate, cancellationToken);
+
+            return rates.Select(MapToResponseDTO).ToList();
+        }
+
+        // Última cotización del dólar (base: Dólar Estadounidense, cotizada: Pesos Argentinos). Solo lectura.
+        public async Task<ExchangeRateResponseDTO?> GetLatestDollarAsync(CancellationToken cancellationToken)
+        {
+            var currencies = await currencyRepository.GetAllAsync(cancellationToken);
+            var dollar = currencies.FirstOrDefault(c => c.Description == DollarDescription);
+            var peso = currencies.FirstOrDefault(c => c.Description == PesoDescription);
+
+            if (dollar is null || peso is null) return null;
+
+            var rate = await exchangeRateRepository.GetLatestAsync(dollar.Id, peso.Id, cancellationToken);
+
+            return rate is null ? null : MapToResponseDTO(rate);
+        }
+
+        // CU19: Supervisar la disponibilidad de una cotización. No crea ni modifica nada.
+        public async Task<ExchangeRateAvailabilityResponseDTO> CheckAvailabilityAsync(
+            Guid baseCurrencyId,
+            Guid targetCurrencyId,
+            DateTime date,
+            CancellationToken cancellationToken)
+        {
+            // Alternativa 4.a: criterios incompletos o inválidos
+            if (baseCurrencyId == Guid.Empty || targetCurrencyId == Guid.Empty)
+                throw new ArgumentException("Debe indicar la moneda base y la moneda cotizada.");
+
+            if (baseCurrencyId == targetCurrencyId)
+                throw new ArgumentException("La moneda base y la moneda cotizada deben ser distintas.");
+
+            if (date == default)
+                throw new ArgumentException("Debe indicar la fecha de referencia.");
+
+            var currencies = await currencyRepository.GetAllAsync(cancellationToken);
+            if (!currencies.Any(c => c.Id == baseCurrencyId) || !currencies.Any(c => c.Id == targetCurrencyId))
+                throw new ArgumentException("Alguna de las monedas indicadas no existe.");
+
+            // Última cotización de la fecha indicada o anterior
+            var rate = await exchangeRateRepository.GetLatestPriorAsync(
+                baseCurrencyId, targetCurrencyId, date, cancellationToken);
+
+            // Alternativa 4.c: no existe cotización aplicable
+            if (rate is null)
+            {
+                return new ExchangeRateAvailabilityResponseDTO
+                {
+                    Available = false,
+                    Message = "No existe una cotización aplicable para los criterios indicados."
+                };
+            }
+
+            // Alternativa 4.b: no hay cotización exacta, se informa la última anterior
+            var isEarlier = rate.Date.Date < date.Date;
+
+            return new ExchangeRateAvailabilityResponseDTO
+            {
+                Available = true,
+                Value = rate.Value,
+                RateDate = rate.Date,
+                IsFromEarlierDate = isEarlier,
+                Message = isEarlier
+                    ? "No hay cotización para la fecha indicada; se informa la última anterior disponible."
+                    : "Cotización disponible para la fecha indicada."
+            };
+        }
+
+        private static ExchangeRateResponseDTO MapToResponseDTO(ExchangeRate rate) => new()
+        {
+            BaseCurrencyId = rate.BaseCurrencyId,
+            BaseCurrencyDescription = rate.BaseCurrency?.Description ?? string.Empty,
+            TargetCurrencyId = rate.TargetCurrencyId,
+            TargetCurrencyDescription = rate.TargetCurrency?.Description ?? string.Empty,
+            Date = rate.Date,
+            Value = rate.Value
+        };
+
         public async Task<IReadOnlyList<MovementDollarEquivalentResponseDTO>> GetMovementsDollarEquivalentsAsync(string userEmail, CancellationToken cancellationToken)
         {
             var user = await userService.GetValidUserAsync(userEmail, cancellationToken);

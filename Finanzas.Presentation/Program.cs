@@ -86,6 +86,9 @@ builder.Services.AddHttpClient<IDollarQuoteProvider, DollarApiQuoteProvider>(cli
 
 builder.Services.AddScoped<IFinancialSummaryService, FinancialSummaryService>();
 
+// Panel de administración (gráficos de movimientos)
+builder.Services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+
 
 
 // Autenticación, Tokens y Seguridad 
@@ -96,6 +99,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
+// Registro en memoria de tokens revocados por el logout (Singleton: debe vivir mientras viva la API)
+builder.Services.AddSingleton<ITokenRevocationStore, InMemoryTokenRevocationStore>();
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
 // ==========================================
@@ -131,6 +136,23 @@ builder.Services
 
             NameClaimType = ClaimTypes.Name,
             RoleClaimType = ClaimTypes.Role
+        };
+
+        // CU03: si el token fue revocado por POST /api/Auth/logout, se rechaza aunque no haya vencido.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var revocationStore = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationStore>();
+
+                if (context.SecurityToken is Microsoft.IdentityModel.JsonWebTokens.JsonWebToken jwt
+                    && revocationStore.IsRevoked(jwt.Id))
+                {
+                    context.Fail("El token fue revocado (sesión cerrada).");
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -170,14 +192,28 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Manejo de CORS
-const string PoliticaCorsFrontend = "FrontendLocal";
+// Los orígenes permitidos se leen de la sección "Cors:AllowedOrigins" (appsettings.json o variables de entorno de Azure:
+// Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, ...). Se admiten comodines de subdominio, ej: https://*.azurestaticapps.net
+const string PoliticaCorsFrontend = "AllowFrontend";
+
+var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .ToArray();
+
+if (allowedOrigins.Length == 0)
+{
+    // Valores por defecto para desarrollo local cuando no hay configuración.
+    allowedOrigins = new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:59169" };
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(PoliticaCorsFrontend, policy =>
     {
         policy
-            .WithOrigins("http://localhost:59169")
+            .WithOrigins(allowedOrigins)
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -193,8 +229,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-        app.UseSwagger();
-        app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 
     // Esta comprobación de desarrollo solo intenta abrir la conexión; no modifica datos.
     await VerificarConexionAsync(app.Services, app.Logger);

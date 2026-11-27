@@ -39,5 +39,26 @@ namespace Finanzas.Infrastructure.ExternalServices
 
             return new JsonWebTokenHandler().CreateToken(descriptor);
         }
+
+        public bool TryReadTokenInfo(string token, out string tokenId, out DateTime expiresAtUtc)
+        {
+            tokenId = string.Empty;
+            expiresAtUtc = DateTime.MinValue;
+
+            try
+            {
+                var jwt = new JsonWebTokenHandler().ReadJsonWebToken(token);
+
+                if (string.IsNullOrWhiteSpace(jwt.Id)) return false;
+
+                tokenId = jwt.Id;
+                expiresAtUtc = jwt.ValidTo;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }

@@ -76,6 +76,39 @@ namespace Finanzas.Infrastructure.Repositories
                 .ThenByDescending(movement => movement.CreationDate)
                 .ToListAsync(cancellationToken);
 
+        public async Task<IReadOnlyList<Movement>> GetForAnalyticsAsync(
+            DateTime? startDate,
+            DateTime? endDate,
+            Guid? userId,
+            CancellationToken cancellationToken)
+        {
+            var query = context.Movements
+                .AsNoTracking()
+                .Include(m => m.User)
+                .Include(m => m.Category)
+                .Include(m => m.Currency)
+                .AsQueryable();
+
+            if (userId.HasValue && userId.Value != Guid.Empty)
+            {
+                query = query.Where(m => m.UserId == userId.Value);
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(m => m.Date >= startDate.Value.Date);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(m => m.Date <= endDate.Value.Date);
+            }
+
+            return await query
+                .OrderBy(m => m.Date)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<Movement?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken) =>
             await context.Movements
                 .Include(m => m.Category)

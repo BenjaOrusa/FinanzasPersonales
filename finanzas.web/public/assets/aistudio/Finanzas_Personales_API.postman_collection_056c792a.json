@@ -1,0 +1,2224 @@
+{
+  "info": {
+    "name": "Finanzas Personales API (Azure)",
+    "description": "Colección de la API de Finanzas Personales desplegada en Azure.\n\nCómo usarla: 1) importar el archivo, 2) correr los dos Login de la carpeta 1 (guardan tokenCliente y tokenAdmin solos), 3) correr las carpetas en orden. Los IDs se guardan automáticamente en variables de la colección.\n\nRoles: público = Auth; Customer = Currency, Account, Category, Movement, FinancialSummary y movements-dollar-equivalent; Administrator = User, POST ExchangeRate e import-latest-dollar. Ningún endpoint es para ambos roles.\n\nCada carpeta tiene dos ejemplos por endpoint. Algunos ejemplos 2 son pruebas de rol (esperan 401 o 403).\n\nEsta colección incluye las contraseñas de los usuarios de prueba: no la subas a un repositorio público.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 · Auth (público, sin token)",
+      "description": "Endpoints públicos: no requieren token.",
+      "item": [
+        {
+          "name": "[1] POST Login — usuario común (Melba)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "CU02 Iniciar sesión. Devuelve un token JWT. El script lo guarda solo en la variable tokenCliente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Email\": \"melba.morel@email.com\",\n  \"Password\": \"Melba123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('tokenCliente', pm.response.json().Token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST Login — administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "CU02 Iniciar sesión (rol Administrator). El script guarda el token en tokenAdmin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Email\": \"admin@email.com\",\n  \"Password\": \"Admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('tokenAdmin', pm.response.json().Token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] POST Register — Juan Pérez",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "CU01 Registrarse. Crea un usuario común activo. Si el correo ya existe responde 400 (no se puede registrar dos veces el mismo email).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Email\": \"juan.perez@email.com\",\n  \"Password\": \"Juan1234\",\n  \"Name\": \"Juan\",\n  \"Surname\": \"Perez\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200,400)', function () { pm.expect([200,400]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST Register — Lucía Gómez",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "CU01 Registrarse. Segundo ejemplo con otro correo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Email\": \"lucia.gomez@email.com\",\n  \"Password\": \"Lucia1234\",\n  \"Name\": \"Lucia\",\n  \"Surname\": \"Gomez\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200,400)', function () { pm.expect([200,400]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · Customer — Currency",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] GET Currency — usuario común",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Currency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Currency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Lista las monedas configuradas. Se usa para obtener el CurrencyId al crear cuentas (precondición de CU04) y cotizaciones. SOLO rol Customer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Currency — con token de admin (prueba de rol → 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Currency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Currency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prueba de permisos: el administrador NO puede usar endpoints de cliente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (403)', function () { pm.expect([403]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · Customer — Account",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] GET Account — activas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account?active=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Lista las cuentas ACTIVAS del usuario (paso 2 de CU05, CU06 y CU07). Ojo: si se omite 'active' vale false y trae las inactivas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Account — inactivas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account?active=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account"
+              ],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "false"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Lista las cuentas inactivas del usuario."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] POST Account — cuenta bancaria en pesos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU04 Crear una cuenta financiera. Queda activa, sin movimientos, a nombre del usuario. Guarda el AccountId en la variable accountId. AccountType es un valor supuesto: el TIF habla de efectivo, cuenta bancaria o billetera virtual.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Cuenta Banco Nación\",\n  \"AccountType\": \"Bank\",\n  \"CurrencyId\": \"{{arsCurrencyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.AccountId) pm.collectionVariables.set('accountId', j.AccountId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST Account — efectivo en dólares",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU04. Segundo ejemplo, en dólares. Guarda el AccountId en accountId2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Efectivo en dólares\",\n  \"AccountType\": \"Cash\",\n  \"CurrencyId\": \"{{usdCurrencyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.AccountId) pm.collectionVariables.set('accountId2', j.AccountId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] PUT Account — editar descripción",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU05 Editar una cuenta propia. Valida que los cambios sean coherentes con los movimientos existentes (por ejemplo, cambiar la moneda con movimientos cargados puede rechazarse).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Cuenta Banco Nación (sueldo)\",\n  \"AccountType\": \"Bank\",\n  \"CurrencyId\": \"{{arsCurrencyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PUT Account — otro nombre",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU05. Segundo ejemplo sobre la misma cuenta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Caja de ahorro principal\",\n  \"AccountType\": \"Bank\",\n  \"CurrencyId\": \"{{arsCurrencyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] GET Account por id — pesos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU07 Consultar saldo y detalles de una cuenta propia, con su moneda. Si la cuenta está inactiva igual se muestra."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Account por id — dólares",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId2}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU07. Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · Customer — Category",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] GET Category — usuario común",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Lista las categorías del usuario (paso 2 de CU09, CU10 y CU11)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Category — sin token (prueba → 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Prueba de autenticación: sin token no se puede acceder."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (401)', function () { pm.expect([401]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] POST Category — gasto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU08 Crear una categoría (activa, a nombre del usuario). Guarda el CategoryId en categoryId. CategoryType es un valor supuesto: el TIF dice ingreso o gasto.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Supermercado\",\n  \"CategoryType\": \"Expense\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.CategoryId) pm.collectionVariables.set('categoryId', j.CategoryId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST Category — ingreso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU08. Segundo ejemplo, de tipo ingreso. Guarda el CategoryId en categoryId2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Sueldo\",\n  \"CategoryType\": \"Income\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.CategoryId) pm.collectionVariables.set('categoryId2', j.CategoryId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] PUT Category — renombrar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category",
+                "{{categoryId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU09 Editar una categoría propia. No deja cambiar el tipo si dejaría movimientos con una categoría incompatible.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Supermercado y limpieza\",\n  \"CategoryType\": \"Expense\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PUT Category — otro nombre",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category",
+                "{{categoryId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU09. Segundo ejemplo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Compras del hogar\",\n  \"CategoryType\": \"Expense\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · Customer — Movement",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] POST Movement — gasto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU11 Registrar un movimiento. Reglas: importe positivo, cuenta y categoría del mismo usuario, tipo del movimiento compatible con el de la categoría. La moneda se toma de la cuenta y el saldo se actualiza. Guarda el MovementId en movementId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Compra semanal en Coto\",\n  \"Amount\": 45000.5,\n  \"Date\": \"2026-11-10T10:00:00Z\",\n  \"MovementType\": \"Expense\",\n  \"CategoryId\": \"{{categoryId}}\",\n  \"AccountId\": \"{{accountId}}\",\n  \"Note\": \"Incluye productos de limpieza\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.MovementId) pm.collectionVariables.set('movementId', j.MovementId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST Movement — ingreso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU11. Ingreso con una categoría de tipo ingreso. Guarda el MovementId en movementId2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Cobro de sueldo noviembre\",\n  \"Amount\": 850000,\n  \"Date\": \"2026-11-05T09:00:00Z\",\n  \"MovementType\": \"Income\",\n  \"CategoryId\": \"{{categoryId2}}\",\n  \"AccountId\": \"{{accountId}}\",\n  \"Note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (201)', function () { pm.expect([201]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200 || pm.response.code === 201) { const j = pm.response.json(); if (j.MovementId) pm.collectionVariables.set('movementId2', j.MovementId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] PUT Movement — corregir monto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU12 Editar un movimiento. Revalida los datos y ajusta los saldos de las cuentas afectadas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Compra semanal en Carrefour\",\n  \"Amount\": 47200,\n  \"Date\": \"2026-11-10T10:00:00Z\",\n  \"MovementType\": \"Expense\",\n  \"CategoryId\": \"{{categoryId}}\",\n  \"AccountId\": \"{{accountId}}\",\n  \"Note\": \"Corregido el monto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PUT Movement — cambiar descripción y fecha",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU12. Segundo ejemplo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Description\": \"Compra semanal en Disco\",\n  \"Amount\": 39800.75,\n  \"Date\": \"2026-11-12T18:30:00Z\",\n  \"MovementType\": \"Expense\",\n  \"CategoryId\": \"{{categoryId}}\",\n  \"AccountId\": \"{{accountId}}\",\n  \"Note\": \"Cambié de supermercado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] GET Movement por id — gasto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Devuelve un movimiento propio (lo usa CU12 para presentar sus datos antes de editar). 404 si no existe o no es del usuario."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Movement por id — ingreso",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId2}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] GET Movement/filter — por tipo y fechas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/filter?movementType=Expense&startDate=2026-11-01&endDate=2026-11-30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "filter"
+              ],
+              "query": [
+                {
+                  "key": "movementType",
+                  "value": "Expense"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-11-30"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU14 Consultar movimientos con filtros opcionales (tipo, fechas, cuenta, categoría). Sin filtros devuelve todos los movimientos propios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET Movement/filter — por cuenta y categoría",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/filter?accountId={{accountId}}&categoryId={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "filter"
+              ],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU14. Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · Admin — ExchangeRate",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] POST ExchangeRate — cotización de hoy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Registra (o actualiza si ya existe) la cotización de un par de monedas para una fecha. Base = dólar, cotizada = pesos. Solo Administrator. Corresponde al CU19 del código, aunque el CU19 del TIF habla de una consulta, no de una carga.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"BaseCurrencyId\": \"{{usdCurrencyId}}\",\n  \"TargetCurrencyId\": \"{{arsCurrencyId}}\",\n  \"Date\": \"2026-11-17T00:00:00Z\",\n  \"Value\": 1575\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST ExchangeRate — cotización de ayer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Segundo ejemplo, otra fecha. Sirve para probar la regla de fallback a la última cotización anterior.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"BaseCurrencyId\": \"{{usdCurrencyId}}\",\n  \"TargetCurrencyId\": \"{{arsCurrencyId}}\",\n  \"Date\": \"2026-11-16T00:00:00Z\",\n  \"Value\": 1560\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] POST ExchangeRate/import-latest-dollar — admin",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate/import-latest-dollar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate",
+                "import-latest-dollar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Importa la cotización del dólar oficial desde dolarapi.com y la guarda. Solo Administrator. Responde 502 si el proveedor externo falla. No figura en el TIF."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200,502)', function () { pm.expect([200,502]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] POST ExchangeRate/import-latest-dollar — cliente (prueba → 403)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate/import-latest-dollar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate",
+                "import-latest-dollar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prueba de permisos: un usuario común no puede importar cotizaciones."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (403)', function () { pm.expect([403]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 · Customer — equivalencias en dólares y resumen",
+      "description": "",
+      "item": [
+        {
+          "name": "[1] GET ExchangeRate/movements-dollar-equivalent — usuario común",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate/movements-dollar-equivalent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate",
+                "movements-dollar-equivalent"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU16 Consultar equivalencia en dólares de los movimientos propios. Usa la cotización de la fecha del movimiento o, si no hay, la última anterior del mismo par. Si no hay ninguna, deja el movimiento sin equivalencia."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET ExchangeRate/movements-dollar-equivalent — sin token (prueba → 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ExchangeRate/movements-dollar-equivalent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ExchangeRate",
+                "movements-dollar-equivalent"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Prueba de autenticación."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (401)', function () { pm.expect([401]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] GET FinancialSummary — usuario común",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/FinancialSummary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "FinancialSummary"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU15 Consultar resumen financiero: total de ingresos, gastos y balance (ingresos menos gastos), separado por moneda."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET FinancialSummary — con token de admin (prueba → 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/FinancialSummary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "FinancialSummary"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prueba de permisos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (403)', function () { pm.expect([403]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8 · Customer — correr al final (desactivar / eliminar)",
+      "description": "Estos requests dejan cuentas y categorías inactivas y borran movimientos. Corrélos después de probar todo lo demás.",
+      "item": [
+        {
+          "name": "[1] PATCH Account/deactivate — cuenta en dólares",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId2}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId2}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU06 Desactivar una cuenta: baja lógica, el historial de movimientos se conserva. Responde 204. Una cuenta inactiva ya no sirve para registrar movimientos nuevos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PATCH Account/deactivate — cuenta en pesos",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Account/{{accountId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Account",
+                "{{accountId}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU06. Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] PATCH Category/deactivate — ingreso",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category/{{categoryId2}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category",
+                "{{categoryId2}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU10 Desactivar una categoría: baja lógica, los movimientos históricos conservan su clasificación."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PATCH Category/deactivate — gasto",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Category/{{categoryId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Category",
+                "{{categoryId}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU10. Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] DELETE Movement — ingreso",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId2}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU13 Eliminar un movimiento. Revierte su efecto en el saldo de la cuenta."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] DELETE Movement — gasto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Movement/{{movementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "Movement",
+                "{{movementId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU13. Segundo ejemplo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204)', function () { pm.expect([204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9 · Admin — User",
+      "description": "Si bloqueás a Melba, no podrá iniciar sesión hasta que la reactives.",
+      "item": [
+        {
+          "name": "[1] GET User — admin",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/User",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "User"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU17 Consultar el listado de usuarios (id, correo, nombre, estado y rol; sin contraseñas). Solo Administrator. El script guarda el Id de Melba en la variable userId."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (200)', function () { pm.expect([200]).to.include(pm.response.code); });",
+                  "if (pm.response.code === 200) { const u = pm.response.json().find(x => x.Email === 'melba.morel@email.com'); if (u) pm.collectionVariables.set('userId', u.Id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] GET User — con token de cliente (prueba → 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/User",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "User"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenCliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Prueba de permisos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (403)', function () { pm.expect([403]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[1] PATCH User/status — bloquear",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/User/{{userId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "User",
+                "{{userId}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU18 Activar, desactivar o bloquear un usuario. Un usuario bloqueado o inactivo no puede iniciar sesión. Estados del TIF: activo, inactivo, bloqueado (los valores exactos son supuestos). Solo Administrator.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Status\": \"Blocked\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204,400)', function () { pm.expect([204,400]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[2] PATCH User/status — reactivar",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/User/{{userId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "User",
+                "{{userId}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "CU18. Vuelve a dejar activo al usuario. Correlo siempre después del bloqueo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Status\": \"Active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status esperado (204,400)', function () { pm.expect([204,400]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://finanzaspersonales-api-h8c0ckhwdmd9ckgm.westus3-01.azurewebsites.net"
+    },
+    {
+      "key": "tokenCliente",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "usdCurrencyId",
+      "value": "b6ea051b-692d-4f57-a15f-304b66876d65"
+    },
+    {
+      "key": "arsCurrencyId",
+      "value": "af992641-5ac2-4919-956d-61785f6f0077"
+    },
+    {
+      "key": "accountId",
+      "value": ""
+    },
+    {
+      "key": "accountId2",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "categoryId2",
+      "value": ""
+    },
+    {
+      "key": "movementId",
+      "value": ""
+    },
+    {
+      "key": "movementId2",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    }
+  ]
+}

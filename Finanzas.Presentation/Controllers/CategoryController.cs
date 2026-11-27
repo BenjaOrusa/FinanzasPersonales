@@ -100,5 +100,47 @@ namespace Finanzas.Api.Controllers
                 return Unauthorized(ex.Message);
             }
         }
+
+        // CU10 (complemento): Reactivar una categoría desactivada
+        [HttpPatch("{categoryId:Guid}/activate")]
+        public async Task<IActionResult> Activate(Guid categoryId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var success = await categoryService.ActivateAsync(userEmail, categoryId, cancellationToken);
+
+                if (!success) return NotFound();
+
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
+
+        // Eliminar físicamente una categoría SIN movimientos (409 si tiene movimientos)
+        [HttpDelete("{categoryId:Guid}")]
+        public async Task<IActionResult> Delete(Guid categoryId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name ?? throw new UnauthorizedAccessException();
+                var success = await categoryService.DeleteAsync(userEmail, categoryId, cancellationToken);
+
+                if (!success) return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+        }
     }
 }

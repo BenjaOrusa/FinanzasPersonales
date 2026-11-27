@@ -5,8 +5,8 @@ using System.Text;
 
 namespace Finanzas.Domain.Interfaces
 {
-        public interface IMovementRepository
-        {
+    public interface IMovementRepository
+    {
         Task<IReadOnlyList<Movement>> GetFilteredByUserIdAsync(
                                                                 Guid userId,
                                                                 string? movementType,
@@ -17,10 +17,14 @@ namespace Finanzas.Domain.Interfaces
                                                                 CancellationToken cancellationToken);
 
         Task<IReadOnlyList<Movement>> GetAllByUserIdAsync(Guid userId, CancellationToken cancellationToken);
-            Task<Movement?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken);
-            void Add(Movement movement);
-            void Remove(Movement movement);
-            Task SaveChangesAsync(CancellationToken cancellationToken);
-        }
+
+        // Panel de administración: movimientos de TODOS los usuarios (o de uno) en un rango de fechas, solo lectura.
+        Task<IReadOnlyList<Movement>> GetForAnalyticsAsync(DateTime? startDate, DateTime? endDate, Guid? userId, CancellationToken cancellationToken);
+
+        Task<Movement?> GetByIdAndUserIdAsync(Guid id, Guid userId, CancellationToken cancellationToken);
+        void Add(Movement movement);
+        void Remove(Movement movement);
+        Task SaveChangesAsync(CancellationToken cancellationToken);
+    }
 
 }

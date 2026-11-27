@@ -1,5 +1,6 @@
 ﻿using Finanzas.Application.DTOs.Request.Auth;
 using Finanzas.Application.DTOs.Response.Auth;
+using Finanzas.Application.DTOs.Response.Users;
 using Finanzas.Application.Interfaces;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Domain.Models;
@@ -11,33 +12,53 @@ namespace Finanzas.Application.Services
 {
     public class AuthService : IAuthService
     {
+        private const string ActiveStatus = "Activo";
+        private const string BlockedStatus = "Bloqueado";
+
         private readonly IUserRepository userRepository;
         private readonly ITokenService tokenService;
         private readonly IPasswordHasher passwordHasher;
+        private readonly ITokenRevocationStore tokenRevocationStore;
 
         public AuthService(
             IUserRepository userRepository,
             ITokenService tokenService,
-            IPasswordHasher passwordHasher)
+            IPasswordHasher passwordHasher,
+            ITokenRevocationStore tokenRevocationStore)
         {
             this.userRepository = userRepository;
             this.tokenService = tokenService;
             this.passwordHasher = passwordHasher;
+            this.tokenRevocationStore = tokenRevocationStore;
         }
 
-        public async Task<LoginResponse?> AuthenticateAsync(LoginRequestDTO request, CancellationToken cancellationToken = default)
+        public async Task<LoginResult> AuthenticateAsync(LoginRequestDTO request, CancellationToken cancellationToken = default)
         {
             var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
 
             if (user == null || !passwordHasher.Verify(request.Password, user.PasswordHash))
             {
-                return null;
+                return new LoginResult(LoginStatus.InvalidCredentials);
+            }
+
+            // CU02 alternativa 4.b y CU18: un usuario Inactivo o Bloqueado no puede iniciar sesión.
+            // Se verifica DESPUÉS de validar la contraseña para no revelar el estado a quien no conoce las credenciales.
+            if (!string.Equals(user.Status, ActiveStatus, StringComparison.OrdinalIgnoreCase))
+            {
+                var reason = string.Equals(user.Status, BlockedStatus, StringComparison.OrdinalIgnoreCase)
+                    ? "bloqueado"
+                    : "inactivo";
+
+                return new LoginResult(
+                    LoginStatus.AccessDenied,
+                    Message: $"El usuario se encuentra {reason}. No puede iniciar sesión; contacte a un administrador.");
             }
 
             // Obtenemos el rol desde la entidad TypeOfUser (ej: "Administrator", "Customer")
             var roleName = user.TypeOfUser?.Description ?? "Customer";
+            var token = tokenService.GenerateToken(user.Email, roleName);
 
-            return new LoginResponse(tokenService.GenerateToken(user.Email, roleName));
+            return new LoginResult(LoginStatus.Success, new LoginResponse(token, MapUser(user)));
         }
 
 
@@ -75,6 +96,34 @@ namespace Finanzas.Application.Services
 
             return true;
         }
+
+        public async Task<UserResponseDTO> GetProfileAsync(string userEmail, CancellationToken cancellationToken = default)
+        {
+            var user = await userRepository.GetByEmailAsync(userEmail, cancellationToken)
+                ?? throw new UnauthorizedAccessException("El usuario autenticado no existe en el sistema.");
+
+            return MapUser(user);
+        }
+
+        // CU03: el token queda registrado como revocado hasta su vencimiento natural.
+        public Task LogoutAsync(string accessToken, CancellationToken cancellationToken = default)
+        {
+            if (tokenService.TryReadTokenInfo(accessToken, out var tokenId, out var expiresAtUtc))
+            {
+                tokenRevocationStore.Revoke(tokenId, expiresAtUtc);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static UserResponseDTO MapUser(User user) => new()
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Name = user.Name,
+            Surname = user.Surname,
+            Status = user.Status,
+            Role = user.TypeOfUser?.Description ?? "Customer"
+        };
     }
 }
-
